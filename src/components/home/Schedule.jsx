@@ -1,0 +1,41 @@
+export default function Schedule(){
+  const days = [
+    {title:'Day 1: Arrival & Awakening', items:[['4:00 PM','Gates Open & Campsite Setup'],['7:00 PM','Opening Ceremony & Sunset Acoustic Set'],['9:00 PM','Main Stage Headliner: The Wandering Souls'] ]},
+    {title:'Day 2: Exploration & Sound', items:[['8:00 AM','Sunrise Yoga & Meditation'],['2:00 PM','Forest Stage: Indie & Folk Showcase'],['8:00 PM','Main Stage Headliner: Echoes of Eden'] ]},
+    {title:'Day 3: Reflection & Departure', items:[['9:00 AM','Gratitude Circle & Sound Bath'],['11:00 AM','Farewell Brunch & Jam Session'],['2:00 PM','Event Concludes'] ]}
+  ]
+
+  return (
+    <section className="bg-forest/10 py-20 sm:py-28" id="schedule">
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="mb-12 text-center">
+          <h2 className="font-display text-brandDark text-4xl font-black leading-tight tracking-[-0.033em]">Event Schedule</h2>
+          <p className="text-brandDark/70 mt-2">Three days of unforgettable experiences.</p>
+        </div>
+        <div className="grid gap-12 md:grid-cols-3">
+          {days.map((day) => (
+            <div className="flex flex-col gap-6" key={day.title}>
+              <h3 className="text-primary text-2xl font-bold">{day.title}</h3>
+              <div className="relative flex flex-col gap-4 pl-12">
+                {day.items.map(([time, label], idx, arr) => (
+                  <div key={idx} className="relative pb-4">
+                    <div className="absolute left-3.5 top-6 bottom-0 w-px bg-forest/30" style={{ display: idx === arr.length - 1 ? 'none' : 'block' }} />
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="h-5 w-5 rounded-full bg-white border-2 border-primary shadow-sm" />
+                      </div>
+                      <div>
+                        <p className="text-brandDark font-bold">{time}</p>
+                        <p className="text-brandDark/70 text-sm">{label}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

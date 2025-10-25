@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Base (safe for @apply) ---------- */
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* tokens for aliases below (keep in sync with tailwind.config.js) */
+    --brand-dark: 14 61 62;    /* #0E3D3E */
+    --offwhite:   247 246 242; /* #F7F6F2 */
+    --primary-r:  212;         /* #D4AF37 -> 212,175,55 */
+    --primary-g:  175;
+    --primary-b:  55;
+  }
+
+  html, body, #root { height: 100%; }
+
+  /* Paper + body type */
+  body { @apply bg-offwhite text-brandDark font-body; }
+
+  /* Serif headings like the image */
+  h1, h2, h3 { @apply font-display; }
+
+  /* Material Symbols setup */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Use gold instead of Tailwind’s default blue focus ring */
+  *, ::before, ::after {
+    --tw-ring-color: rgb(var(--primary-r) var(--primary-g) var(--primary-b) / 0.5);
+  }
+
+  /* Non-blue selection color */
+  ::selection {
+    background-color: rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.18);
+    color: rgb(var(--brand-dark));
+  }
+}
+
+/* ---------- Utility aliases & gentle overrides ---------- */
+@layer utilities {
+  /* Keep any old classnames working */
+
+  /* Old “background-dark” → use brandDark (matches image’s dark sections) */
+  .bg-background-dark { background-color: rgb(var(--brand-dark)); }
+  .text-background-dark { color: rgb(var(--brand-dark)); }
+
+  /* Legacy “off-white” text token = dark ink on light areas */
+  .text-off-white { color: rgb(var(--brand-dark)); }
+  .text-off-white\/80 { color: rgb(var(--brand-dark) / 0.80); }
+
+  /* Light forest tints for subtle panels/rows */
+  .bg-forest-green\/20 { background-color: rgb(18 66 57 / 0.20); } /* #124239 @ 20% */
+  .bg-forest-green\/40 { background-color: rgb(18 66 57 / 0.40); }
+
+  /* Very light paper block (if used) */
+  .bg-offwhite { background-color: rgb(var(--offwhite)); }
+
+  /* Slate “dark” backgrounds → light equivalents so lists don’t look heavy */
+  .bg-slate-900 { @apply bg-slate-50; }
+  .bg-slate-900\/40 { background-color: rgb(15 23 42 / 0.04); }
+  .bg-slate-900\/60 { background-color: rgb(15 23 42 / 0.06); }
+  .bg-slate-950 { @apply bg-slate-50; }
+
+  /* No heavy box-shadows tied to those */
+  .bg-slate-900\/60, .bg-slate-900\/40, .bg-slate-900 { box-shadow: none; }
+
+  /* If any component used a black overlay, make it gentle (image-first) */
+  .from-black\/80 {
+    --tw-gradient-from: rgb(255 255 255 / 0.80);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  /* Subtle borders on light */
+  .border-white\/10 { border-color: rgb(var(--brand-dark) / 0.12); }
+}
