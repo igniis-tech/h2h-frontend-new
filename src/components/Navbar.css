@@ -1,4 +1,4 @@
-.navbar {
+/* .navbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -69,11 +69,11 @@
 .navbar.scrolled .login-btn {
   /* background-color: #333;
   color: #fff; */
-  background-color: #000;
-  color: #fff;
-}
+  /* background-color: #000; */
+  /* color: #fff; */
+/* } */
 
-.login-btn:hover {
-  background-color: #111;
-  color: #fff;
-}
+/* .login-btn:hover { */
+  /* background-color: #111; */
+  /* color: #fff; */
+/* } */ 
