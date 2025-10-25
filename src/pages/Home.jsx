@@ -13,9 +13,9 @@ export default function Home(){
     <div className="font-body">
       <Hero />
       <Stats />
-  <About />
-  <Highlights />
-  <Schedule />
+      <About />
+      <Highlights />
+      <Schedule />
       <Artists />
       <Location />
       <Pricing />

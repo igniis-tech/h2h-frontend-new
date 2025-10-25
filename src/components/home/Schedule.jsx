@@ -6,7 +6,7 @@ export default function Schedule(){
   ]
 
   return (
-    <section className="bg-forest/10 py-20 sm:py-28" id="schedule">
+    <section className="bg-white py-20 sm:py-28" id="schedule">
       <div className="mx-auto max-w-5xl px-4">
         <div className="mb-12 text-center">
           <h2 className="font-display text-brandDark text-4xl font-black leading-tight tracking-[-0.033em]">Event Schedule</h2>
@@ -19,7 +19,7 @@ export default function Schedule(){
               <div className="relative flex flex-col gap-4 pl-12">
                 {day.items.map(([time, label], idx, arr) => (
                   <div key={idx} className="relative pb-4">
-                    <div className="absolute left-3.5 top-6 bottom-0 w-px bg-forest/30" style={{ display: idx === arr.length - 1 ? 'none' : 'block' }} />
+                    <div className="absolute left-3.5 top-6 bottom-0 w-px bg-white" style={{ display: idx === arr.length - 1 ? 'none' : 'block' }} />
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <div className="h-5 w-5 rounded-full bg-white border-2 border-primary shadow-sm" />

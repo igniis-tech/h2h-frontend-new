@@ -1,0 +1,79 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 3rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  z-index: 1000;
+  background: transparent;
+}
+
+.navbar.scrolled {
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.logo {
+  height: 45px;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li {
+  margin: 0 1.5rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-weight: 500;
+  color: white;
+  transition: color 0.3s ease;
+}
+
+.navbar.scrolled .nav-links a {
+  color: #333;
+}
+
+.nav-links a:hover {
+  color: #f3b200;
+}
+
+.navbar-right {
+  margin-right: 2rem;
+}
+
+.login-btn {
+  background-color: #000;
+  border: none;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.navbar.scrolled .login-btn {
+  /* background-color: #333;
+  color: #fff; */
+  background-color: #000;
+  color: #fff;
+}
+
+.login-btn:hover {
+  background-color: #111;
+  color: #fff;
+}

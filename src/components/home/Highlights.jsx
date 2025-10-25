@@ -11,7 +11,7 @@ const FEATURES = [
 
 export default function Highlights(){
   return (
-    <section id="journey" className="bg-cream py-12">
+    <section id="journey" className="section bg-white">
       <div className="mx-auto max-w-5xl px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-forest mb-8">Your Unforgettable Journey Begins</h2>
 
@@ -30,3 +30,4 @@ export default function Highlights(){
     </section>
   )
 }
+
