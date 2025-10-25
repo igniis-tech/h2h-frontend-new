@@ -2,9 +2,9 @@
 // import { useAuth } from "../state/auth";
 // import { startSSO } from "../api/client";
 
-// export default function NavBar() {
-//   const { user, setUser } = useAuth();
-//   const navigate = useNavigate();
+export default function NavBar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
 //   async function handleLogin() {
 //     // kicks off SSO redirect
@@ -94,17 +94,15 @@ export default function Navbar() {
     }
   }
 
-  const linkBase = scrolled ? 'text-slate-800' : 'text-white'
-  const linkCls = `${linkBase} hover:opacity-80 transition`
-
-  const handleLogin = async () => {
-    if (loggingIn) return
-    setLoggingIn(true)
-    try { 
-      await startSSO() 
-    } catch (e) { 
-      console.error(e)
-      setLoggingIn(false) 
+  async function handleLogout() {
+    try {
+      // First call the backend logout
+      await api.logout();
+      // Then clear frontend state
+      await logout();
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
     }
   }
 
