@@ -1,27 +1,65 @@
 import React, { useEffect, useState } from 'react'
-import { api, formatINR } from '../../api/client'
+import { request } from '../../api/client'
 import { Link } from 'react-router-dom'
+import { formatINR } from '../../api/client'
 
 export default function PackageGrid(){
   const [packages, setPackages] = useState([])
-  useEffect(()=>{
-    api.listPackages().then(d=>{
-      const pkgs = Array.isArray(d) ? d : d?.packages || d?.data?.packages || d?.results || []
-      setPackages(pkgs || [])
-    }).catch(()=>{})
-  },[])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const fallback = [
-    {name:'Wanderer Pass', price_inr:6499, items:['3-Day General Admission','Access to All Main Stages','Campsite Access'], featured:false},
-    {name:'Explorer VIP', price_inr:12999, items:['All Wanderer Pass Benefits','VIP Lounge Access','Priority Stage Viewing','Exclusive Workshops'], featured:true},
-    {name:'Camping Pass', price_inr:2500, items:['Per-Person Add-On','Designated Tent Spot','Access to Showers & Facilities'], featured:false},
-  ]
+  useEffect(() => {
+    setLoading(true)
+    request('/packages')
+      .then(d => {
+        const pkgs = Array.isArray(d) ? d : d?.packages || d?.data?.packages || d?.results || []
+        setPackages(pkgs || [])
+      })
+      .catch(error => {
+        console.error('Failed to load packages:', error)
+        setError(error.message)
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
-  const list = packages.length ? packages : fallback
+  if (loading) {
+    return (
+      <div className="grid gap-8 md:grid-cols-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex flex-col rounded-xl border-2 border-earthy/60 bg-forest/5 p-8 animate-pulse">
+            <div className="h-6 bg-slate-700 rounded w-2/3 mb-4"></div>
+            <div className="h-8 bg-slate-700 rounded w-1/2 mb-6"></div>
+            <div className="space-y-3 flex-grow">
+              <div className="h-4 bg-slate-700/50 rounded w-full"></div>
+              <div className="h-4 bg-slate-700/50 rounded w-5/6"></div>
+              <div className="h-4 bg-slate-700/50 rounded w-4/6"></div>
+            </div>
+            <div className="h-12 bg-slate-700 rounded-lg mt-8"></div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        <p>Failed to load packages: {error}</p>
+      </div>
+    )
+  }
+
+  if (!packages.length) {
+    return (
+      <div className="text-center py-8 text-slate-400">
+        <p>No packages available at the moment.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
-      {list.map((p)=> (
+      {packages.map((p)=> (
         <div
           key={p.id || p.name}
           className={`flex flex-col rounded-xl border-2 ${p.featured ? 'border-primary bg-forest/10' : 'border-earthy/60 bg-forest/5'} p-8`}

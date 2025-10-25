@@ -3,7 +3,7 @@ import { useAuth } from "../state/auth";
 import { startSSO } from "../api/client";
 
 export default function NavBar() {
-  const { user, setUser } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogin() {
@@ -12,16 +12,15 @@ export default function NavBar() {
   }
 
   async function handleLogout() {
-    // optional: call backend logout, but clear client state regardless
     try {
-      // await api.logout(); // if you had it enabled server side
-    } catch {}
-    try { localStorage.removeItem("jwt"); } catch {}
-    try { sessionStorage.removeItem("jwt"); } catch {}
-    try { localStorage.removeItem("user_info"); } catch {}
-    try { sessionStorage.removeItem("user_info"); } catch {}
-    setUser(null);
-    navigate("/", { replace: true });
+      // First call the backend logout
+      await api.logout();
+      // Then clear frontend state
+      await logout();
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }
 
   return (
