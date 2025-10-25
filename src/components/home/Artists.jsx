@@ -3,7 +3,7 @@ export default function Artists(){
   const tags = ['Indie Folk','Ambient Electronic','Roots Rock','Soulful Acoustic','Chillwave Jazz','Meditative Soundscapes']
 
   return (
-    <section className="py-20 sm:py-28" id="artists">
+    <section className="bg-white min-h-screen py-20 sm:py-28" id="artists">
       <div className="mx-auto max-w-5xl px-4">
         <div className="mb-12 text-center">
           <h2 className="font-display text-brandDark text-4xl font-black leading-tight tracking-[-0.033em]">The Lineup</h2>
