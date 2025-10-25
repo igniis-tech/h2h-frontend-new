@@ -17,11 +17,17 @@
 
   html, body, #root { height: 100%; }
 
-  /* Paper + body type */
-  body { @apply bg-offwhite text-brandDark font-body; }
+  /* Paper + body type - avoid @apply on custom/util classes to prevent build errors */
+  body {
+    background-color: rgb(var(--offwhite));
+    color: rgb(var(--brand-dark));
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
 
-  /* Serif headings like the image */
-  h1, h2, h3 { @apply font-display; }
+  /* Serif headings fallback (avoid @apply if font-display is a custom utility) */
+  h1, h2, h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+  }
 
   /* Material Symbols setup */
   .material-symbols-outlined {
