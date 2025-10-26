@@ -15,6 +15,9 @@ import Login from './pages/auth/Login'
 import Callback from './pages/auth/Callback'
 import { AuthProvider } from './context/AuthContext'
 
+import { ensureCsrfCookie } from './api/client';
+
+ensureCsrfCookie().catch(() => {});
 function Layout({ children }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">

@@ -1,4 +1,4 @@
 window._env_ = {
-  BACKEND_URL: "https://cdl0jxx6-8000.inc1.devtunnels.ms/",
+  BACKEND_URL: "http://127.0.0.1:8000/",
   ENABLE_AUTH: true
 };
