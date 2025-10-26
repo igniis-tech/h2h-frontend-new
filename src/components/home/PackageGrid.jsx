@@ -110,7 +110,7 @@ export default function PackageGrid({ showHeader = false }) {
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
-      {packages.map((p)=> (
+      {packages.map((p) => (
         <div
           key={p.id || p.name}
           className={`flex flex-col rounded-xl border-2 ${p.featured ? 'border-primary bg-forest/10' : 'border-earthy/60 bg-forest/5'} p-8`}
@@ -118,8 +118,10 @@ export default function PackageGrid({ showHeader = false }) {
           <h3 className="text-primary text-xl font-bold">{p.name}</h3>
           <p className="text-brandDark my-4 text-4xl font-black">{formatINR(p.price_inr || p.price || p.amount || 0)}</p>
           <ul className="flex-grow space-y-3 text-brandDark/80">
-            {(p.items || (p.description ? [p.description] : [])).map((it, idx)=> (
-              <li key={idx} className="flex items-center gap-2"><span className="material-symbols-outlined text-primary text-lg">check_circle</span>{it}</li>
+            {(p.items || (p.description ? [p.description] : [])).map((it, idx) => (
+              <li key={idx} className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-lg">check_circle</span>{it}
+              </li>
             ))}
           </ul>
           <Link
@@ -129,8 +131,8 @@ export default function PackageGrid({ showHeader = false }) {
             <span className="truncate">{p.featured ? 'Register Now' : 'Register'}</span>
           </Link>
         </div>
-      </div>
-    </section>
+      ))}
+    </div>
   )
 }
 
