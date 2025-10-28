@@ -21,9 +21,9 @@ const fromVite = (import.meta?.env?.VITE_API_BASE) || "";
 export const API_BASE = normalizeApiBase(fromEnvJs || fromVite || "/api");
 
 // -------------------------------------------------
-// Small utils (same shape as your working project)
+// Small utils
 // -------------------------------------------------
-function withTimeout(promise, ms = 12000) {
+export function withTimeout(promise, ms = 12000) {
   let t;
   return Promise.race([
     promise.finally(() => clearTimeout(t)),
@@ -48,7 +48,7 @@ export async function ensureCsrfCookie() {
   return getCookie("csrftoken");
 }
 
-// Compose headers for unsafe methods (POST/PUT/DELETE) — OLD APP STYLE
+// Compose headers for unsafe methods (POST/PUT/DELETE)
 export async function csrfHeaders(extra = {}) {
   const token = await ensureCsrfCookie();
   return {
@@ -58,12 +58,9 @@ export async function csrfHeaders(extra = {}) {
   };
 }
 
-// Prime CSRF on module load (shows in Network)
+// Prime CSRF on module load (handy during dev)
 try { ensureCsrfCookie(); } catch {}
 
-// ------------------------------------
-// Core request() (GETs and plain fetch)
-// ------------------------------------
 export async function request(
   path,
   { method = "GET", body = null, headers = {} } = {}
@@ -112,8 +109,6 @@ export const api = {
 
   // Auth / Me
   me: () => request("/auth/me"),
-
-  // Server-side logout (uses CSRF headers like old app)
   logout: async () => request("/auth/logout", {
     method: "POST",
     headers: await csrfHeaders(),
@@ -127,30 +122,17 @@ export const api = {
   },
 
   // Call this from /auth/callback (server sets session cookie)
-  // Also persist tokens/profile if backend returns them (parity with old app)
+  // Also persist tokens/profile if backend returns them
   ssoCallback: async (queryString = "") => {
     const data = await request(`/auth/sso/callback${queryString}`);
     try {
-      const access =
-        data?.tokens?.access_token || data?.access_token || null;
-      const idToken =
-        data?.tokens?.id_token || data?.id_token || null;
-      const profile =
-        data?.claims || data?.user || data?.user_info || null;
+      const access  = data?.tokens?.access_token || data?.access_token || null;
+      const idToken = data?.tokens?.id_token     || data?.id_token     || null;
+      const profile = data?.claims || data?.user || data?.user_info    || null;
 
-      if (access) {
-        localStorage.setItem("jwt", access);
-        sessionStorage.setItem("jwt", access);
-      }
-      if (idToken) {
-        localStorage.setItem("id_token", idToken);
-        sessionStorage.setItem("id_token", idToken);
-      }
-      if (profile) {
-        const s = JSON.stringify(profile);
-        localStorage.setItem("user_info", s);
-        sessionStorage.setItem("user_info", s);
-      }
+      if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
+      if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
+      if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
     } catch {}
     return data;
   },
@@ -160,42 +142,56 @@ export const api = {
     const q = new URLSearchParams(params).toString();
     return request(`/packages${q ? `?${q}` : ""}`);
   },
-
   availability: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/inventory/availability${q ? `?${q}` : ""}`);
   },
 
-  // Bookings & Payments (unsafe → use csrfHeaders just like old project)
+  // Bookings
   createBooking: async (payload) => request("/bookings/create", {
     method: "POST",
     headers: await csrfHeaders(),
     body: payload,
   }),
-
   myBookings: () => request("/bookings/me"),
 
-  createOrder: async ({ package_id, booking_id, promo_code }) => request("/payments/create-order", {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: { package_id, booking_id, promo_code },
-  }),
+ // client.js
+createOrder: async ({ package_id, booking_id, promo_code, pass_platform_fee = true, assume_method, return_to } = {}) => {
+  const body = { package_id, booking_id, promo_code, pass_platform_fee, assume_method, return_to };
+  return request("/payments/create-order", { method: "POST", headers: await csrfHeaders(), body });
+},
 
+
+
+  // Promocodes
   validatePromocode: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/promocodes/validate${q ? `?${q}` : ""}`);
   },
 
-  // Tickets (PDF) — override Accept
-  ticketByOrderPdf: async (orderId) =>
-    request(`/tickets/order/${orderId}.pdf`, {
-      headers: { Accept: "application/pdf" },
-    }),
+  // Orders / Status polling
+  getOrderStatus: (oid) => request(`/orders/status?oid=${encodeURIComponent(oid)}`),
 
+  // Tickets (PDF)
+  ticketUrl: (bookingId) => `${API_BASE}/tickets/booking/${encodeURIComponent(bookingId)}.pdf`,
+  ticketByOrderPdf: async (orderId) =>
+    request(`/tickets/order/${orderId}.pdf`, { headers: { Accept: "application/pdf" } }),
   ticketByBookingPdf: async (bookingId) =>
-    request(`/tickets/booking/${bookingId}.pdf`, {
-      headers: { Accept: "application/pdf" },
-    }),
+    request(`/tickets/booking/${bookingId}.pdf`, { headers: { Accept: "application/pdf" } }),
+
+  // Optional: sightseeing opt-in (used by Register.jsx)
+  sightseeingOptIn: async ({ booking_id, opt_in = true, guests }) => request("/sightseeing/optin", {
+    method: "POST",
+    headers: await csrfHeaders(),
+    body: { booking_id, opt_in, guests },
+  }),
+
+  // Generic POST helper (fallback)
+  post: async (path, payload) => request(path, {
+    method: "POST",
+    headers: await csrfHeaders(),
+    body: payload,
+  }),
 };
 
 // -------------------------
@@ -208,7 +204,7 @@ export function startSSO() {
     sessionStorage.setItem("sso_return_to", window.location.pathname || "/");
 
     const redirectUri = `${window.location.origin}/auth/sso/callback`;
-    // Ask backend for provider URL (same as old app)
+    // Ask backend for provider URL
     return request(
       `/auth/sso/authorize?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`
     )
@@ -217,7 +213,7 @@ export function startSSO() {
         window.location.href = url;
       })
       .catch(() => {
-        // fallback: hit authorize endpoint directly
+        // Fallback: hit authorize endpoint directly
         window.location.href = api.ssoAuthorizeUrl(state, redirectUri);
       });
   } catch {
@@ -233,22 +229,12 @@ export async function exchangeCodeForToken({ code, state }) {
   const data = await request(url.toString().replace(API_BASE, ""), { method: "GET" });
   // persist like old app
   try {
-    const access = data?.tokens?.access_token || data?.access_token || null;
-    const idToken = data?.tokens?.id_token || data?.id_token || null;
-    const profile = data?.claims || data?.user || data?.user_info || null;
-    if (access) {
-      localStorage.setItem("jwt", access);
-      sessionStorage.setItem("jwt", access);
-    }
-    if (idToken) {
-      localStorage.setItem("id_token", idToken);
-      sessionStorage.setItem("id_token", idToken);
-    }
-    if (profile) {
-      const s = JSON.stringify(profile);
-      localStorage.setItem("user_info", s);
-      sessionStorage.setItem("user_info", s);
-    }
+    const access  = data?.tokens?.access_token || data?.access_token || null;
+    const idToken = data?.tokens?.id_token     || data?.id_token     || null;
+    const profile = data?.claims || data?.user || data?.user_info    || null;
+    if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
+    if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
+    if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
   } catch {}
   return data;
 }

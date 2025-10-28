@@ -1,4 +1,8 @@
 
+
+
+
+// // src/pages/auth/Callback.jsx
 // import React, { useEffect, useRef, useState } from "react";
 // import { useNavigate, useLocation } from "react-router-dom";
 // import { API_BASE, exchangeCodeForToken } from "../../api/client";
@@ -27,7 +31,6 @@
 //           throw new Error("State mismatch");
 //         }
 
-//         // 1) Try XHR callback (keeps SPA on same page)
 //         const { access_token, user_info } = await exchangeCodeForToken({
 //           code,
 //           state: returnedState || undefined,
@@ -35,23 +38,23 @@
 //         if (access_token) setToken(access_token);
 //         if (user_info) setProfile(user_info);
 
-//         // 2) Probe /auth/me to confirm session cookie is usable for XHR
+//         // Probe that XHR sees the session
 //         const probe = await fetch(`${API_BASE}/auth/me?_=${Date.now()}`, {
 //           credentials: "include",
 //           headers: { Accept: "application/json" },
 //         });
 
+//         // Clear one-shot flags now that we're signed in
+//         sessionStorage.removeItem("sso_state");
+//         sessionStorage.removeItem("forceLoggedOut");
+
 //         if (!probe.ok) {
-//           // 3) Fallback: do a full-page redirect to backend callback so
-//           // the cookie is set in a top-level navigation (mobile/webviews)
 //           const next = `${window.location.origin}/auth/sso/callback?stage=done`;
 //           const url = `${API_BASE}/auth/sso/callback${search}&next=${encodeURIComponent(next)}`;
 //           window.location.replace(url);
-//           return; // stop here; we’ll re-enter with stage=done
+//           return;
 //         }
 
-//         // Normal happy path
-//         sessionStorage.removeItem("sso_state");
 //         const returnTo = sessionStorage.getItem("sso_return_to") || "/profile";
 //         sessionStorage.removeItem("sso_return_to");
 //         navigate(returnTo, { replace: true });
@@ -83,11 +86,10 @@
 // }
 
 
-
 // src/pages/auth/Callback.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { API_BASE, exchangeCodeForToken } from "../../api/client";
+import { API_BASE, api, exchangeCodeForToken } from "../../api/client"; // <-- import api
 import { useAuth } from "../../context/AuthContext";
 
 export default function Callback() {
@@ -104,15 +106,36 @@ export default function Callback() {
     const p = new URLSearchParams(search || "");
     const code = p.get("code");
     const returnedState = p.get("state");
+    const stage = p.get("stage"); // <-- catch 'done'
     const expectedState = sessionStorage.getItem("sso_state");
 
     (async () => {
       try {
-        if (!code) throw new Error("Missing authorization code");
+        // --- 1) Handle post-callback landing with no code (stage=done) ---
+        if (!code || stage === "done") {
+          // Try to read the logged-in user via session cookie
+          try {
+            const me = await api.me(); // GET /auth/me with credentials
+            if (me?.user || me?.id || me?.email) {
+              // best-effort profile stash
+              try { setProfile(me); } catch {}
+              sessionStorage.removeItem("sso_state");
+              sessionStorage.removeItem("forceLoggedOut");
+              const returnTo = sessionStorage.getItem("sso_return_to") || "/profile";
+              sessionStorage.removeItem("sso_return_to");
+              navigate(returnTo, { replace: true });
+              return;
+            }
+          } catch {}
+          throw new Error("Missing authorization code");
+        }
+
+        // --- 2) State check (only when both exist) ---
         if (expectedState && returnedState && expectedState !== returnedState) {
           throw new Error("State mismatch");
         }
 
+        // --- 3) Primary path: exchange via XHR (keeps SPA in place) ---
         const { access_token, user_info } = await exchangeCodeForToken({
           code,
           state: returnedState || undefined,
@@ -120,33 +143,39 @@ export default function Callback() {
         if (access_token) setToken(access_token);
         if (user_info) setProfile(user_info);
 
-        // Probe that XHR sees the session
+        // --- 4) Probe that XHR sees the cookie (SameSite in dev, etc.) ---
         const probe = await fetch(`${API_BASE}/auth/me?_=${Date.now()}`, {
           credentials: "include",
           headers: { Accept: "application/json" },
         });
 
-        // Clear one-shot flags now that we're signed in
+        // Clear one-shot flags
         sessionStorage.removeItem("sso_state");
         sessionStorage.removeItem("forceLoggedOut");
 
         if (!probe.ok) {
+          // --- 5) Fallback: full-page backend callback so cookies are 1st-party ---
           const next = `${window.location.origin}/auth/sso/callback?stage=done`;
-          const url = `${API_BASE}/auth/sso/callback${search}&next=${encodeURIComponent(next)}`;
-          window.location.replace(url);
+          const u = new URL(`${API_BASE}/auth/sso/callback`);
+          if (code) u.searchParams.set("code", code);
+          if (returnedState) u.searchParams.set("state", returnedState);
+          u.searchParams.set("next", next);
+          window.location.replace(u.toString());
           return;
         }
 
+        // --- 6) Success path ---
         const returnTo = sessionStorage.getItem("sso_return_to") || "/profile";
         sessionStorage.removeItem("sso_return_to");
         navigate(returnTo, { replace: true });
       } catch (e) {
         console.error("SSO exchange failed:", e);
         setError(e?.message || "SSO exchange failed");
-        navigate("/login", { replace: true });
+        // Show the error briefly, then send to login
+        setTimeout(() => navigate("/login", { replace: true }), 150);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
