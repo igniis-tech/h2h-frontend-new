@@ -1,4 +1,6 @@
-
+// -------------------------------------------------
+// Base / API origin
+// -------------------------------------------------
 function normalizeApiBase(raw) {
   try {
     const appHost = window.location.hostname; // "localhost" / "127.0.0.1" / "::1"
@@ -114,22 +116,18 @@ export const api = {
     headers: await csrfHeaders(),
   }),
 
-  // SSO: ask backend for provider URL (JSON with authorization_url)
+  // SSO (legacy helpers kept for completeness; not used in the flow below)
   ssoAuthorizeUrl: (state, redirectUri) => {
     let url = `${API_BASE}/auth/sso/authorize?state=${encodeURIComponent(state || "")}`;
     if (redirectUri) url += `&redirect_uri=${encodeURIComponent(redirectUri)}`;
     return url;
   },
-
-  // Call this from /auth/callback (server sets session cookie)
-  // Also persist tokens/profile if backend returns them
   ssoCallback: async (queryString = "") => {
     const data = await request(`/auth/sso/callback${queryString}`);
     try {
       const access  = data?.tokens?.access_token || data?.access_token || null;
       const idToken = data?.tokens?.id_token     || data?.id_token     || null;
       const profile = data?.claims || data?.user || data?.user_info    || null;
-
       if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
       if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
       if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
@@ -155,13 +153,11 @@ export const api = {
   }),
   myBookings: () => request("/bookings/me"),
 
- // client.js
-createOrder: async ({ package_id, booking_id, promo_code, pass_platform_fee = true, assume_method, return_to } = {}) => {
-  const body = { package_id, booking_id, promo_code, pass_platform_fee, assume_method, return_to };
-  return request("/payments/create-order", { method: "POST", headers: await csrfHeaders(), body });
-},
-
-
+  // Payments
+  createOrder: async ({ package_id, booking_id, promo_code, pass_platform_fee = true, assume_method, return_to } = {}) => {
+    const body = { package_id, booking_id, promo_code, pass_platform_fee, assume_method, return_to };
+    return request("/payments/create-order", { method: "POST", headers: await csrfHeaders(), body });
+  },
 
   // Promocodes
   validatePromocode: (params = {}) => {
@@ -194,50 +190,106 @@ createOrder: async ({ package_id, booking_id, promo_code, pass_platform_fee = tr
   }),
 };
 
-// -------------------------
-// SSO helpers (front-end)
-// -------------------------
+
+function frontendCallbackUri() {
+  return `${window.location.origin}/auth/callback`; // must match Cognito “Allowed callback URLs”
+}
+
 export function startSSO() {
+  // avoid duplicate definitions — keep only this one
   const state = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   try {
     sessionStorage.setItem("sso_state", state);
     sessionStorage.setItem("sso_return_to", window.location.pathname || "/");
+  } catch {}
 
-    const redirectUri = `${window.location.origin}/auth/sso/callback`;
-    // Ask backend for provider URL
-    return request(
-      `/auth/sso/authorize?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`
-    )
-      .then((data) => {
-        const url = data?.authorization_url || data?.url || api.ssoAuthorizeUrl(state, redirectUri);
-        window.location.href = url;
-      })
-      .catch(() => {
-        // Fallback: hit authorize endpoint directly
-        window.location.href = api.ssoAuthorizeUrl(state, redirectUri);
-      });
-  } catch {
-    window.location.href = api.ssoAuthorizeUrl(state, `${window.location.origin}/auth/sso/callback`);
-  }
+  const redirectUri = frontendCallbackUri();
+  // always go to backend’s login redirect endpoint; backend will 302 to Cognito
+  const url =
+    `${API_BASE}/auth/sso/login?` +
+    `state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+  window.location.assign(url); // top-level nav so cookies land correctly
 }
 
-// Optional: raw exchange helper (old-project style)
+// export async function exchangeCodeForToken({ code, state }) {
+//   // the server callback now accepts redirect_uri — send the same one we used above
+//   const url = new URL(`${API_BASE}/auth/sso/callback`);
+//   if (code)  url.searchParams.set("code", code);
+//   if (state) url.searchParams.set("state", state);
+//   url.searchParams.set("redirect_uri", frontendCallbackUri());
+
+//   const res = await withTimeout(fetch(url.toString(), {
+//     method: "GET",
+//     credentials: "include",
+//     headers: { Accept: "application/json" },
+//     cache: "no-store",
+//   }), 12000);
+
+//   const ct = res.headers.get("content-type") || "";
+//   const body = ct.includes("application/json") ? await res.json() : await res.text();
+//   if (!res.ok) {
+//     throw new Error(typeof body === "string" ? body : (body?.error || `HTTP ${res.status}`));
+//   }
+
+//   // optional: persist tokens/profile locally, though the HttpOnly session cookie is canonical
+//   try {
+//     const access  = body?.tokens?.access_token || body?.access_token || null;
+//     const idToken = body?.tokens?.id_token     || body?.id_token     || null;
+//     const profile = body?.user || body?.claims || body?.user_info    || null;
+//     if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
+//     if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
+//     if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
+//   } catch {}
+
+//   return body;
+// }
+
+// Redeem the code exactly once (guards duplicate effect/HMR runs)
 export async function exchangeCodeForToken({ code, state }) {
+  if (!code) throw new Error("missing code");
+
+  // one-time guard per code (prevents second redeem → 400)
+  const guardKey = `sso_redeemed_${code}`;
+  if (sessionStorage.getItem(guardKey)) return null;
+  sessionStorage.setItem(guardKey, "1");
+
   const url = new URL(`${API_BASE}/auth/sso/callback`);
-  if (code) url.searchParams.set("code", code);
+  url.searchParams.set("code", code);
   if (state) url.searchParams.set("state", state);
-  const data = await request(url.toString().replace(API_BASE, ""), { method: "GET" });
-  // persist like old app
+  // Send the SAME redirect_uri you used in /login
+  url.searchParams.set("redirect_uri", frontendCallbackUri());
+
+  const res = await withTimeout(fetch(url.toString(), {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  }), 15000);
+
+  const ct = res.headers.get("content-type") || "";
+  const body = ct.includes("application/json") ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    // Allow you to see Cognito error text in console
+    const msg = typeof body === "string" ? body : (body?.error || `HTTP ${res.status}`);
+    throw new Error(msg);
+  }
+
+  // Optional: persist tokens/profile if backend returns them
   try {
-    const access  = data?.tokens?.access_token || data?.access_token || null;
-    const idToken = data?.tokens?.id_token     || data?.id_token     || null;
-    const profile = data?.claims || data?.user || data?.user_info    || null;
+    const access  = body?.tokens?.access_token || body?.access_token || null;
+    const idToken = body?.tokens?.id_token     || body?.id_token     || null;
+    const profile = body?.claims || body?.user || body?.user_info    || null;
     if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
     if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
     if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
   } catch {}
-  return data;
+
+  return body;
 }
+
+
 
 // -------------------------
 // Small UI helper
