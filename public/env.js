@@ -1,4 +1,4 @@
 window._env_ = {
-  BACKEND_URL: "https://h2h-backend-vpk9.vercel.app/",
+  BACKEND_URL: "http://127.0.0.1:8000/",
   ENABLE_AUTH: true
 };

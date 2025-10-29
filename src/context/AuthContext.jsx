@@ -1,47 +1,55 @@
-
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { API_BASE, csrfHeaders, startSSO } from "../api/client";
+import { api, getAccessToken, setAuthTokens, startSSO } from "../api/client";
 
 const AuthCtx = createContext(null);
 
+// Read profile from storage for initial paint
 function readProfile() {
   try {
     return (
       JSON.parse(sessionStorage.getItem("user_info") || "null") ||
       JSON.parse(localStorage.getItem("user_info") || "null")
     );
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }) {
+  // Initialize from storage so refreshes stay logged in
   const [token, setToken] = useState(
     sessionStorage.getItem("jwt") || localStorage.getItem("jwt") || null
   );
   const [profile, setProfile] = useState(readProfile());
   const [loading, setLoading] = useState(true);
 
+  // First paint: probe /auth/me using Bearer from client.js
   useEffect(() => {
-    // Don’t auto-login; just detect current session
     refresh().finally(() => setLoading(false));
+
+    // Listen for token writes from client.js (e.g., after /auth/callback)
+    const onAuthUpdated = async () => {
+      const t = getAccessToken();
+      if (t && !token) setToken(t);
+      await refresh();
+    };
+    window.addEventListener("auth:updated", onAuthUpdated);
+    return () => window.removeEventListener("auth:updated", onAuthUpdated);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refresh() {
     try {
-      const res = await fetch(`${API_BASE}/auth/me?_=${Date.now()}`, {
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error("not authed");
-      const data = await res.json();
-      setProfile(data || null);
-      // Keep storages (optional)
+      const me = await api.me(); // uses Bearer header (client.js)
+      setProfile(me || null);
       try {
-        sessionStorage.setItem("user_info", JSON.stringify(data || null));
-        localStorage.setItem("user_info", JSON.stringify(data || null));
+        sessionStorage.setItem("user_info", JSON.stringify(me || null));
+        localStorage.setItem("user_info", JSON.stringify(me || null));
       } catch {}
-      return data || null;
+      const t = getAccessToken();
+      if (t && !token) setToken(t);
+      return me || null;
     } catch {
       setProfile(null);
       return null;
@@ -49,44 +57,44 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    // Tell server to drop session
+    try { await api.logout(); } catch {}
+    setAuthTokens({ access: null, refresh: null });
     try {
-      await fetch(`${API_BASE}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-        headers: await csrfHeaders(),
-      });
+      ["sso_state","sso_return_to","jwt","id_token","user_info","refresh_token","cookie_snapshot"]
+        .forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
     } catch {}
-
-    // Guard against auto SSO until user clicks Login again
-    try { sessionStorage.setItem("forceLoggedOut", "1"); } catch {}
-
-    // Clear all local hints
-    const drop = (k) => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch {} };
-    ["sso_state", "sso_return_to", "jwt", "id_token", "user_info", "cookie_snapshot"].forEach(drop);
-
     setToken(null);
     setProfile(null);
   }
 
-  const value = useMemo(
-    () => ({
-      token,
-      setToken,
-      profile,
-      setProfile,
-      login: startSSO,
-      logout,
-      refresh,
-      loading,
-      isAuthed: !!profile || !!token,
-    }),
-    [token, profile, loading]
-  );
+  const value = useMemo(() => ({
+  token,
+  // let callback page “wake up” the navbar immediately
+  setToken: (t) => { setToken(t); setAuthTokens({ access: t, refresh: null }); },
 
-  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+  // current shape
+  profile,
+  setProfile,
+
+  // ✅ aliases for backward compatibility
+  user: profile,
+  setUser: setProfile,
+
+  login: startSSO,
+  logout,
+  refresh,
+  loading,
+  isAuthed: !!(profile && (profile.email || profile.username || profile.name)) || !!token,
+}), [token, profile, loading]);
+
+return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
+// ✅ Named hook export
 export function useAuth() {
-  return useContext(AuthCtx);
+  const ctx = useContext(AuthCtx);
+  if (!ctx) {
+    throw new Error("useAuth must be used within <AuthProvider>");
+  }
+  return ctx;
 }

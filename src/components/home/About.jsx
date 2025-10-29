@@ -6,10 +6,25 @@ export default function About(){
           <div className="flex flex-col gap-4">
             <h2 className="font-display text-brandDark text-4xl font-black leading-tight tracking-[-0.033em]">About The Event</h2>
             <p className="text-brandDark/70 text-base leading-relaxed">
-              Embark on a transformative journey at Highway to Heal, where the rhythm of music,
-              the serenity of nature, and the spirit of adventure converge. Our mission is to
-              create an immersive experience that rejuvenates the soul. Expect stunning landscapes,
-              captivating performances, and a community connected by a shared love for exploration and healing.
+              Highway to Heal is an immersive music-travel experienc part road trip, part intimate live performanc designed to reset your soul in nature with your favorite artists.
+
+                  What it aims to do
+
+                  Bring fans and artists face-to-face outdoors
+
+                  Go beyond conventional stage shows with intimate, unplugged moments
+
+                  Let you share your stories with the artists
+
+                  Rekindle 90s/2000s nostalgia
+
+                  Showcase artists’ latest work and make new memories
+
+                  Travel alongside artists and enjoy live sets in scenic spots
+
+                  Explore raw, untouched landscapes
+
+                  Celebrate local culture and spotlight homegrown talent
             </p>
           </div>
           <div
@@ -27,12 +42,26 @@ export default function About(){
             }}
           />
           <div className="flex flex-col gap-4 md:order-1">
-            <h3 className="font-display text-brandDark text-2xl font-bold leading-tight">Community & Connection</h3>
+            <h3 className="font-display text-brandDark text-2xl font-bold leading-tight">Highway To Heal Volume 4.0</h3>
             <p className="text-brandDark/70 text-base leading-relaxed">
-              From sunrise yoga sessions to late-night jam sessions under the stars, every moment is curated
-              to inspire and delight. Join a vibrant community of fellow travelers, artists, and nature lovers
-              to share stories and create lasting memories that will echo long after the road ends.
-            </p>
+                Thanks for making Vol. 1.0–3.0 unforgettable. Built on your feedback, Vol. 4.0 is more intimate, immersive, and fun.
+
+                What’s in store
+
+                Special guests and surprise collabs
+
+                Artist–fan sessions & Q&As
+
+                Campfire jams, unplugged sets, and karaoke
+
+                Bite-size workshops (rhythm, writing, storytelling)
+
+                90s/2000s throwbacks + fresh releases
+
+                Spotlight on emerging indie talent
+
+                Whether you’re into chill stays, backpacking vibes, great food, deep music, or arts & culture—there’s a lane for you.
+                            </p>
           </div>
         </div>
       </div>

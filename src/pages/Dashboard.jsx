@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, formatINR } from '../api/client'
-import { useAuth } from '../state/auth'
+import { useAuth } from "../context/AuthContext"; 
 import TicketCard from '../components/TicketCard'
 
 function BookingRow({ b, onViewTicket, onDownloadTicket }) {

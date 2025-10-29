@@ -1,325 +1,28 @@
-// // -------------------------------------------------
-// // Base / API origin
-// // -------------------------------------------------
-// function normalizeApiBase(raw) {
-//   try {
-//     const appHost = window.location.hostname; // "localhost" / "127.0.0.1" / "::1"
-//     const u = new URL(raw || "", window.location.origin);
-//     const isLoop = (h) => h === "localhost" || h === "127.0.0.1" || h === "[::1]";
-//     if (isLoop(appHost) && isLoop(u.hostname) && u.hostname !== appHost) {
-//       u.hostname = appHost; // keep SameSite cookies happy in dev
-//     }
-//     if (!u.pathname.endsWith("/api") && !u.pathname.endsWith("/api/")) {
-//       u.pathname = u.pathname.replace(/\/+$/, "") + "/api";
-//     }
-//     return u.href.replace(/\/+$/, "");
-//   } catch {
-//     return "/api";
-//   }
-// }
+export function formatINR(n) {
+  const num = Number(n ?? 0);
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(num);
+  } catch {
+    const rounded = Math.round(num);
+    return `₹${(isNaN(rounded) ? 0 : rounded).toLocaleString("en-IN")}`;
+  }
+}
 
-// const fromEnvJs = (typeof window !== "undefined" && window._env_?.BACKEND_URL) || "";
-// const fromVite = (import.meta?.env?.VITE_API_BASE) || "";
-// export const API_BASE = normalizeApiBase(fromEnvJs || fromVite || "/api");
-
-// // -------------------------------------------------
-// // Small utils
-// // -------------------------------------------------
-// export function withTimeout(promise, ms = 12000) {
-//   let t;
-//   return Promise.race([
-//     promise.finally(() => clearTimeout(t)),
-//     new Promise((_, rej) => (t = setTimeout(() => rej(new Error("Request timeout")), ms))),
-//   ]);
-// }
-
-// function getCookie(name) {
-//   if (typeof document === "undefined") return null;
-//   const m = document.cookie.match(new RegExp("(^|; )" + name + "=([^;]*)"));
-//   return m ? decodeURIComponent(m[2]) : null;
-// }
-
-// // Ensure csrftoken cookie exists (your /health/ sets it via @ensure_csrf_cookie)
-// // IMPORTANT: no custom headers here → no CORS preflight.
-// export async function ensureCsrfCookie() {
-//   let token = getCookie("csrftoken");
-//   if (token) return token;
-//   try {
-//     await fetch(`${API_BASE}/health/?t=${Date.now()}`, { credentials: "include" });
-//   } catch {}
-//   return getCookie("csrftoken");
-// }
-
-// // Compose headers for unsafe methods (POST/PUT/DELETE)
-// export async function csrfHeaders(extra = {}) {
-//   const token = await ensureCsrfCookie();
-//   return {
-//     "Content-Type": "application/json",
-//     ...(token ? { "X-CSRFToken": token } : {}),
-//     ...extra,
-//   };
-// }
-
-// // Prime CSRF on module load (handy during dev)
-// try { ensureCsrfCookie(); } catch {}
-
-// export async function request(
-//   path,
-//   { method = "GET", body = null, headers = {} } = {}
-// ) {
-//   let url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-//   const methodUpper = (method || "GET").toUpperCase();
-//   const isGet = !body && methodUpper === "GET";
-//   const isJson = body && typeof body === "object" && !(body instanceof FormData);
-
-//   // Cache-bust GETs (esp. /auth/me)
-//   if (isGet) {
-//     const sep = url.includes("?") ? "&" : "?";
-//     url = `${url}${sep}_=${Date.now()}`;
-//   }
-
-//   // Defaults (user-provided headers override below)
-//   let h = {
-//     Accept: "application/json",
-//     ...(isJson ? { "Content-Type": "application/json" } : {}),
-//     ...headers, // <-- override defaults (e.g. Accept: 'application/pdf')
-//   };
-
-//   const res = await fetch(url, {
-//     method: methodUpper,
-//     credentials: "include",
-//     headers: h,
-//     body: isJson ? JSON.stringify(body) : body,
-//     cache: "no-store",
-//     redirect: "follow",
-//   });
-
-//   const ct = res.headers.get("content-type") || "";
-//   if (!res.ok) {
-//     const msg = await (ct.includes("application/json") ? res.json() : res.text());
-//     throw new Error(typeof msg === "string" ? msg : (msg?.error || `HTTP ${res.status}`));
-//   }
-//   return ct.includes("application/json") ? res.json() : res;
-// }
-
-// // -----------------------------------------------------
-// // API wrappers — mirror your backend urls.py endpoints
-// // -----------------------------------------------------
-// export const api = {
-//   // Health
-//   health: () => request("/health/"),
-
-//   // Auth / Me
-//   me: () => request("/auth/me"),
-//   logout: async () => request("/auth/logout", {
-//     method: "POST",
-//     headers: await csrfHeaders(),
-//   }),
-
-//   // SSO (legacy helpers kept for completeness; not used in the flow below)
-//   ssoAuthorizeUrl: (state, redirectUri) => {
-//     let url = `${API_BASE}/auth/sso/authorize?state=${encodeURIComponent(state || "")}`;
-//     if (redirectUri) url += `&redirect_uri=${encodeURIComponent(redirectUri)}`;
-//     return url;
-//   },
-//   ssoCallback: async (queryString = "") => {
-//     const data = await request(`/auth/sso/callback${queryString}`);
-//     try {
-//       const access  = data?.tokens?.access_token || data?.access_token || null;
-//       const idToken = data?.tokens?.id_token     || data?.id_token     || null;
-//       const profile = data?.claims || data?.user || data?.user_info    || null;
-//       if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
-//       if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
-//       if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
-//     } catch {}
-//     return data;
-//   },
-
-//   // Packages / Inventory
-//   listPackages: (params = {}) => {
-//     const q = new URLSearchParams(params).toString();
-//     return request(`/packages${q ? `?${q}` : ""}`);
-//   },
-//   availability: (params = {}) => {
-//     const q = new URLSearchParams(params).toString();
-//     return request(`/inventory/availability${q ? `?${q}` : ""}`);
-//   },
-
-//   // Bookings
-//   createBooking: async (payload) => request("/bookings/create", {
-//     method: "POST",
-//     headers: await csrfHeaders(),
-//     body: payload,
-//   }),
-//   myBookings: () => request("/bookings/me"),
-
-//   // Payments
-//   createOrder: async ({ package_id, booking_id, promo_code, pass_platform_fee = true, assume_method, return_to } = {}) => {
-//     const body = { package_id, booking_id, promo_code, pass_platform_fee, assume_method, return_to };
-//     return request("/payments/create-order", { method: "POST", headers: await csrfHeaders(), body });
-//   },
-
-//   // Promocodes
-//   validatePromocode: (params = {}) => {
-//     const q = new URLSearchParams(params).toString();
-//     return request(`/promocodes/validate${q ? `?${q}` : ""}`);
-//   },
-
-//   // Orders / Status polling
-//   getOrderStatus: (oid) => request(`/orders/status?oid=${encodeURIComponent(oid)}`),
-
-//   // Tickets (PDF)
-//   ticketUrl: (bookingId) => `${API_BASE}/tickets/booking/${encodeURIComponent(bookingId)}.pdf`,
-//   ticketByOrderPdf: async (orderId) =>
-//     request(`/tickets/order/${orderId}.pdf`, { headers: { Accept: "application/pdf" } }),
-//   ticketByBookingPdf: async (bookingId) =>
-//     request(`/tickets/booking/${bookingId}.pdf`, { headers: { Accept: "application/pdf" } }),
-
-//   // Optional: sightseeing opt-in (used by Register.jsx)
-//   sightseeingOptIn: async ({ booking_id, opt_in = true, guests }) => request("/sightseeing/optin", {
-//     method: "POST",
-//     headers: await csrfHeaders(),
-//     body: { booking_id, opt_in, guests },
-//   }),
-
-//   // Generic POST helper (fallback)
-//   post: async (path, payload) => request(path, {
-//     method: "POST",
-//     headers: await csrfHeaders(),
-//     body: payload,
-//   }),
-// };
-
-
-// function frontendCallbackUri() {
-//   return `${window.location.origin}/auth/callback`; // must match Cognito “Allowed callback URLs”
-// }
-
-// export function startSSO() {
-//   // avoid duplicate definitions — keep only this one
-//   const state = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-//   try {
-//     sessionStorage.setItem("sso_state", state);
-//     sessionStorage.setItem("sso_return_to", window.location.pathname || "/");
-//   } catch {}
-
-//   const redirectUri = frontendCallbackUri();
-//   // always go to backend’s login redirect endpoint; backend will 302 to Cognito
-//   const url =
-//     `${API_BASE}/auth/sso/login?` +
-//     `state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-//   window.location.assign(url); // top-level nav so cookies land correctly
-// }
-
-// // export async function exchangeCodeForToken({ code, state }) {
-// //   // the server callback now accepts redirect_uri — send the same one we used above
-// //   const url = new URL(`${API_BASE}/auth/sso/callback`);
-// //   if (code)  url.searchParams.set("code", code);
-// //   if (state) url.searchParams.set("state", state);
-// //   url.searchParams.set("redirect_uri", frontendCallbackUri());
-
-// //   const res = await withTimeout(fetch(url.toString(), {
-// //     method: "GET",
-// //     credentials: "include",
-// //     headers: { Accept: "application/json" },
-// //     cache: "no-store",
-// //   }), 12000);
-
-// //   const ct = res.headers.get("content-type") || "";
-// //   const body = ct.includes("application/json") ? await res.json() : await res.text();
-// //   if (!res.ok) {
-// //     throw new Error(typeof body === "string" ? body : (body?.error || `HTTP ${res.status}`));
-// //   }
-
-// //   // optional: persist tokens/profile locally, though the HttpOnly session cookie is canonical
-// //   try {
-// //     const access  = body?.tokens?.access_token || body?.access_token || null;
-// //     const idToken = body?.tokens?.id_token     || body?.id_token     || null;
-// //     const profile = body?.user || body?.claims || body?.user_info    || null;
-// //     if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
-// //     if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
-// //     if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
-// //   } catch {}
-
-// //   return body;
-// // }
-
-// // Redeem the code exactly once (guards duplicate effect/HMR runs)
-// export async function exchangeCodeForToken({ code, state }) {
-//   if (!code) throw new Error("missing code");
-
-//   // one-time guard per code (prevents second redeem → 400)
-//   const guardKey = `sso_redeemed_${code}`;
-//   if (sessionStorage.getItem(guardKey)) return null;
-//   sessionStorage.setItem(guardKey, "1");
-
-//   const url = new URL(`${API_BASE}/auth/sso/callback`);
-//   url.searchParams.set("code", code);
-//   if (state) url.searchParams.set("state", state);
-//   // Send the SAME redirect_uri you used in /login
-//   url.searchParams.set("redirect_uri", frontendCallbackUri());
-
-//   const res = await withTimeout(fetch(url.toString(), {
-//     method: "GET",
-//     credentials: "include",
-//     headers: { Accept: "application/json" },
-//     cache: "no-store",
-//   }), 15000);
-
-//   const ct = res.headers.get("content-type") || "";
-//   const body = ct.includes("application/json") ? await res.json() : await res.text();
-
-//   if (!res.ok) {
-//     // Allow you to see Cognito error text in console
-//     const msg = typeof body === "string" ? body : (body?.error || `HTTP ${res.status}`);
-//     throw new Error(msg);
-//   }
-
-//   // Optional: persist tokens/profile if backend returns them
-//   try {
-//     const access  = body?.tokens?.access_token || body?.access_token || null;
-//     const idToken = body?.tokens?.id_token     || body?.id_token     || null;
-//     const profile = body?.claims || body?.user || body?.user_info    || null;
-//     if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
-//     if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
-//     if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
-//   } catch {}
-
-//   return body;
-// }
-
-
-
-// // -------------------------
-// // Small UI helper
-// // -------------------------
-// export function formatINR(n) {
-//   const num = Number(n ?? 0);
-//   try {
-//     return new Intl.NumberFormat("en-IN", {
-//       style: "currency",
-//       currency: "INR",
-//       maximumFractionDigits: 0,
-//     }).format(num);
-//   } catch {
-//     const rounded = Math.round(num);
-//     return `₹${(isNaN(rounded) ? 0 : rounded).toLocaleString("en-IN")}`;
-//   }
-// }
-
-
+//// src/api/client.js
 // -------------------------------------------------
 // Base / API origin
 // -------------------------------------------------
 function normalizeApiBase(raw) {
   try {
-    const appHost = window.location.hostname; // "localhost" / "127.0.0.1" / "::1"
+    const appHost = window.location.hostname;
     const u = new URL(raw || "", window.location.origin);
-    // CHANGE: treat both "::1" and "[::1]" as loopback (browser gives "::1")
     const isLoop = (h) => ["localhost", "127.0.0.1", "::1", "[::1]"].includes(h);
     if (isLoop(appHost) && isLoop(u.hostname) && u.hostname !== appHost) {
-      u.hostname = appHost; // keep SameSite cookies happy in dev
+      u.hostname = appHost; // keep loopback host consistent
     }
     if (!u.pathname.endsWith("/api") && !u.pathname.endsWith("/api/")) {
       u.pathname = u.pathname.replace(/\/+$/, "") + "/api";
@@ -331,7 +34,7 @@ function normalizeApiBase(raw) {
 }
 
 const fromEnvJs = (typeof window !== "undefined" && window._env_?.BACKEND_URL) || "";
-const fromVite = (import.meta?.env?.VITE_API_BASE) || "";
+const fromVite  = (import.meta?.env?.VITE_API_BASE) || "";
 export const API_BASE = normalizeApiBase(fromEnvJs || fromVite || "/api");
 
 // -------------------------------------------------
@@ -345,159 +48,218 @@ export function withTimeout(promise, ms = 12000) {
   ]);
 }
 
-function getCookie(name) {
-  if (typeof document === "undefined") return null;
-  const m = document.cookie.match(new RegExp("(^|; )" + name + "=([^;]*)"));
-  return m ? decodeURIComponent(m[2]) : null;
-}
+// -------------------------------------------------
+// Tokens (stateless; memory + storage)
+// -------------------------------------------------
+let accessToken  = null; // Cognito access token
+let idToken      = null; // Cognito ID token
+let refreshToken = null; // Cognito refresh token
 
-// Ensure csrftoken cookie exists (your /health/ sets it via @ensure_csrf_cookie)
-// IMPORTANT: no custom headers here → no CORS preflight.
-export async function ensureCsrfCookie() {
-  let token = getCookie("csrftoken");
-  if (token) return token;
+(function bootstrapTokens() {
   try {
-    await fetch(`${API_BASE}/health/?t=${Date.now()}`, { credentials: "include" });
+    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || null;
+    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || null;
+    refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || null;
   } catch {}
-  return getCookie("csrftoken");
+})();
+
+function emitAuthUpdated() {
+  try { window.dispatchEvent(new Event("auth:updated")); } catch {}
 }
 
+function persistTokens({ access, id, refresh } = {}) {
+  // Update in-memory only for keys that were provided
+  if (access !== undefined) accessToken  = access;
+  if (id     !== undefined) idToken      = id;
+  if (refresh!== undefined) refreshToken = refresh;
 
-
-// ---------- CSRF bootstrap (replace your ensureCsrfCookie/csrfHeaders) ----------
-let __csrfToken = null;
-
-async function fetchCsrfToken() {
-  // Always GET and with a trailing slash to avoid APPEND_SLASH issues.
-  const res = await fetch(`${API_BASE}/health/`, {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error("CSRF /health/ failed");
-  const data = await res.json().catch(() => ({}));
-  // health() returns {"ok": true, "csrfToken": "<same value as cookie>"}
-  __csrfToken = data?.csrfToken || null;
-  return __csrfToken;
-}
-
-export async function ensureCsrfToken() {
-  // If we already have the server-issued token, use it.
-  if (__csrfToken) return __csrfToken;
-  try {
-    return await fetchCsrfToken();
-  } catch {
-    // As a last resort (same-origin only), try reading document.cookie
-    // but DO NOT rely on this cross-site.
-    const m = typeof document !== "undefined"
-      ? document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)
-      : null;
-    __csrfToken = m ? decodeURIComponent(m[1]) : null;
-    return __csrfToken;
-  }
-}
-
-export async function csrfHeaders(extra = {}) {
-  const token = await ensureCsrfToken();
-  return {
-    "Content-Type": "application/json",
-    "X-Requested-With": "XMLHttpRequest",
-    ...(token ? { "X-CSRFToken": token } : {}),
-    ...extra,
+  const write = (k, v) => {
+    try {
+      if (v === undefined) return;
+      if (v === null) {
+        sessionStorage.removeItem(k); localStorage.removeItem(k);
+      } else {
+        sessionStorage.setItem(k, v); localStorage.setItem(k, v);
+      }
+    } catch {}
   };
+  write("jwt", accessToken);
+  write("id_jwt", idToken);
+  write("refresh_token", refreshToken);
+
+  emitAuthUpdated();
 }
 
-// Prime once on module load (awaited to avoid first-POST race)
-(async () => { try { await ensureCsrfToken(); } catch {} })();
+export function setAuthTokens({ access, id, refresh } = {}) { persistTokens({ access, id, refresh }); }
+export function getAccessToken() { return accessToken; }
+export function getIdToken()     { return idToken; }
 
-// Compose headers for unsafe methods (POST/PUT/DELETE)
-// export async function csrfHeaders(extra = {}) {
-//   const token = await ensureCsrfCookie();
-//   return {
-//     "Content-Type": "application/json",
-//     "X-Requested-With": "XMLHttpRequest", // CHANGE: helps some setups; explicit unsafe intent
-//     ...(token ? { "X-CSRFToken": token } : {}),
-//     ...extra,
-//   };
-// }
+// Prefer ID token for all endpoints (your backend checks id_token)
+function chooseTokenFor(/* url */) {
+  return getIdToken() || getAccessToken();
+}
 
-// CHANGE: Prime CSRF on module load and actually await it to avoid first-POST race
-(async () => { try { await ensureCsrfCookie(); } catch {} })();
+// (optional) refresh flow (if you wire it up server-side)
+let refreshInFlight = null;
+async function refreshAccessToken() {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    if (!refreshToken) throw new Error("no refresh token");
+    const endpoints = [`${API_BASE}/auth/oauth/refresh`, `${API_BASE}/auth/refresh`];
+    let data = null, lastErr = null;
+    for (const ep of endpoints) {
+      try {
+        const r = await fetch(ep, {
+          method: "POST",
+          headers: { "Accept": "application/json", "Content-Type": "application/json" },
+          credentials: "omit",
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!r.ok) throw new Error(`refresh ${r.status}`);
+        data = await r.json().catch(() => ({}));
+        break;
+      } catch (e) { lastErr = e; }
+    }
+    if (!data) throw lastErr || new Error("refresh failed");
+    const newAccess  = data.access || data.access_token || null;
+    const newId      = data.id || data.id_token || getIdToken() || null;
+    const newRefresh = data.refresh || data.refresh_token || refreshToken || null;
+    if (!newAccess) throw new Error("no access token returned");
+    persistTokens({ access: newAccess, id: newId, refresh: newRefresh });
+    return newAccess;
+  })();
+  try { return await refreshInFlight; } finally { refreshInFlight = null; }
+}
 
-export async function request(
-  path,
-  { method = "GET", body = null, headers = {} } = {}
-) {
+// -------------------------------------------------
+// Core request helper
+// -------------------------------------------------
+export async function request(path, { method = "GET", body = null, headers = {}, accept = "application/json" } = {}) {
   let url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-  const methodUpper = (method || "GET").toUpperCase();
-  const isGet = !body && methodUpper === "GET";
+  const m = (method || "GET").toUpperCase();
   const isJson = body && typeof body === "object" && !(body instanceof FormData);
 
-  // Cache-bust GETs (esp. /auth/me)
-  if (isGet) {
+  if (m === "GET" && !body) {
     const sep = url.includes("?") ? "&" : "?";
     url = `${url}${sep}_=${Date.now()}`;
   }
 
-  // Defaults (user-provided headers override below)
-  let h = {
-    Accept: "application/json",
-    ...(isJson ? { "Content-Type": "application/json" } : {}),
-    ...headers, // <-- override defaults (e.g. Accept: 'application/pdf')
-  };
+  async function doFetch() {
+    const token = chooseTokenFor(url);
+    const h = {
+      Accept: accept,
+      ...(isJson ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    };
+    return fetch(url, {
+      method: m,
+      credentials: "omit",
+      headers: h,
+      body: isJson ? JSON.stringify(body) : body,
+      cache: "no-store",
+      redirect: "follow",
+    });
+  }
 
-  const res = await fetch(url, {
-    method: methodUpper,
-    credentials: "include",
-    headers: h,
-    body: isJson ? JSON.stringify(body) : body,
-    cache: "no-store",
-    redirect: "follow",
-  });
+  let res = await doFetch();
+  if (res.status === 401) {
+    try {
+      await refreshAccessToken();
+      res = await doFetch();
+    } catch {}
+  }
 
   const ct = res.headers.get("content-type") || "";
   if (!res.ok) {
     const msg = await (ct.includes("application/json") ? res.json() : res.text());
     throw new Error(typeof msg === "string" ? msg : (msg?.error || `HTTP ${res.status}`));
   }
+
+  if (accept === "application/pdf") return res;
   return ct.includes("application/json") ? res.json() : res;
 }
 
+// -------------------------
+// PDF helpers
+// -------------------------
+function syncTokensFromStorage() {
+  try {
+    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || accessToken || null;
+    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || idToken || null;
+    refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || refreshToken || null;
+  } catch {}
+}
+
+async function fetchPdfBlob(path) {
+  const url =
+    (path.startsWith("http") ? path : `${API_BASE}${path}`) +
+    (path.includes("?") ? "&" : "?") + `_=${Date.now()}`;
+
+  syncTokensFromStorage();
+  const bearer = getIdToken() || getAccessToken();
+
+  const res = await fetch(url, {
+    method: "GET",
+    credentials: "omit",
+    headers: {
+      Accept: "application/pdf",
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+    },
+    cache: "no-store",
+    redirect: "follow",
+  });
+
+  if (typeof res.blob === "function") {
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      const msg = await (ct.includes("application/json") ? res.json() : res.text());
+      throw new Error(typeof msg === "string" ? msg : (msg?.error || `HTTP ${res.status}`));
+    }
+    return await res.blob();
+  }
+
+  if (res instanceof Blob) return res;
+  if (res && typeof res.arrayBuffer === "function") {
+    const buf = await res.arrayBuffer();
+    return new Blob([buf], { type: "application/pdf" });
+  }
+  return new Blob([res], { type: "application/pdf" });
+}
+
+async function fetchPdfResponse(path) {
+  const blob = await fetchPdfBlob(path);
+  return new Response(blob, { status: 200, headers: { "Content-Type": "application/pdf" } });
+}
+
+export async function downloadPdf(path, filename = "ticket.pdf") {
+  const blob = await fetchPdfBlob(path);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // -----------------------------------------------------
-// API wrappers — mirror your backend urls.py endpoints
+// API wrappers
 // -----------------------------------------------------
 export const api = {
-  // Health
-  health: () => request("/health/"),
-
-  // Auth / Me
-  me: () => request("/auth/me"),
-  logout: async () => request("/auth/logout", {
-    method: "POST",
-    headers: await csrfHeaders(),
-  }),
-
-  // SSO (legacy helpers kept for completeness; not used in the flow below)
+  me: () => request("/auth/me"),               // uses id_token first
+  logout: async () => {
+    try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch {}
+    setAuthTokens({ access: null, id: null, refresh: null });
+    try { sessionStorage.removeItem("user_info"); localStorage.removeItem("user_info"); } catch {}
+    return { ok: true };
+  },
   ssoAuthorizeUrl: (state, redirectUri) => {
     let url = `${API_BASE}/auth/sso/authorize?state=${encodeURIComponent(state || "")}`;
     if (redirectUri) url += `&redirect_uri=${encodeURIComponent(redirectUri)}`;
     return url;
   },
-  ssoCallback: async (queryString = "") => {
-    const data = await request(`/auth/sso/callback${queryString}`);
-    try {
-      const access  = data?.tokens?.access_token || data?.access_token || null;
-      const idToken = data?.tokens?.id_token     || data?.id_token     || null;
-      const profile = data?.claims || data?.user || data?.user_info    || null;
-      if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
-      if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
-      if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
-    } catch {}
-    return data;
-  },
 
-  // Packages / Inventory
   listPackages: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/packages${q ? `?${q}` : ""}`);
@@ -506,90 +268,43 @@ export const api = {
     const q = new URLSearchParams(params).toString();
     return request(`/inventory/availability${q ? `?${q}` : ""}`);
   },
-
-  // Bookings
-  createBooking: async (payload) => request("/bookings/create", {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: payload,
-  }),
+  createBooking: (payload) => request("/bookings/create", { method: "POST", body: payload }),
   myBookings: () => request("/bookings/me"),
-
-  // Payments
-  // CHANGE: remove unused promo_code from body (server doesn't use it)
-  createOrder: async ({ package_id, booking_id, pass_platform_fee = true, assume_method, return_to } = {}) => {
-    const body = { package_id, booking_id, pass_platform_fee, assume_method, return_to };
-    return request("/payments/create-order", { method: "POST", headers: await csrfHeaders(), body });
-  },
-
-  // Promocodes
+  createOrder: ({ package_id, booking_id, pass_platform_fee = true, assume_method, return_to } = {}) =>
+    request("/payments/create-order", { method: "POST", body: { package_id, booking_id, pass_platform_fee, assume_method, return_to } }),
   validatePromocode: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/promocodes/validate${q ? `?${q}` : ""}`);
   },
-
-  // Orders / Status polling
   getOrderStatus: (oid) => request(`/orders/status?oid=${encodeURIComponent(oid)}`),
 
-  // Tickets (PDF)
-  ticketUrl: (bookingId) => `${API_BASE}/tickets/booking/${encodeURIComponent(bookingId)}.pdf`,
+  // PDF APIs (Response-compatible) + direct download helpers
+  ticketByOrderPdf:   (orderId)   => fetchPdfResponse(`/tickets/order/${orderId}.pdf`),
+  ticketByBookingPdf: (bookingId) => fetchPdfResponse(`/tickets/booking/${bookingId}.pdf`),
+  downloadTicketByOrder:   (orderId)   => downloadPdf(`/tickets/order/${orderId}.pdf`,   `ticket-${orderId}.pdf`),
+  downloadTicketByBooking: (bookingId) => downloadPdf(`/tickets/booking/${bookingId}.pdf`, `booking-${bookingId}.pdf`),
 
-  // CHANGE: return Blob instead of raw Response for easy download/view
-  ticketByOrderPdf: async (orderId) => getPdfBlob(`/tickets/order/${orderId}.pdf`),
-  ticketByBookingPdf: async (bookingId) => getPdfBlob(`/tickets/booking/${bookingId}.pdf`),
-
-  // Optional: sightseeing opt-in (used by Register.jsx)
-  sightseeingOptIn: async ({ booking_id, opt_in = true, guests }) => request("/sightseeing/optin", {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: { booking_id, opt_in, guests },
-  }),
-
-  // Generic POST helper (fallback)
-  post: async (path, payload) => request(path, {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: payload,
-  }),
+  post: (path, payload) => request(path, { method: "POST", body: payload }),
 };
 
 // -------------------------
-// SSO helpers (extra safety)
+// SSO helpers
 // -------------------------
-function frontendCallbackUri() {
-  return `${window.location.origin}/auth/callback`; // must match Cognito “Allowed callback URLs”
-}
-
-// CHANGE: optional state verification helper (use on your callback page)
-export function readAndVerifySsoState(returnedState) {
-  try {
-    const expected = sessionStorage.getItem("sso_state");
-    return expected && returnedState && expected === returnedState;
-  } catch { return true; }
-}
+function frontendCallbackUri() { return `${window.location.origin}/auth/callback`; }
 
 export function startSSO() {
-  // avoid duplicate definitions — keep only this one
   const state = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   try {
     sessionStorage.setItem("sso_state", state);
     sessionStorage.setItem("sso_return_to", window.location.pathname || "/");
   } catch {}
-
   const redirectUri = frontendCallbackUri();
-  // always go to backend’s login redirect endpoint; backend will 302 to Cognito
-  const url =
-    `${API_BASE}/auth/sso/login?` +
-    `state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-  window.location.assign(url); // top-level nav so cookies land correctly
+  const url = `${API_BASE}/auth/sso/login?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.assign(url);
 }
 
-// Redeem the code exactly once (guards duplicate effect/HMR runs)
 export async function exchangeCodeForToken({ code, state }) {
   if (!code) throw new Error("missing code");
-
-  // one-time guard per code (prevents second redeem → 400)
   const guardKey = `sso_redeemed_${code}`;
   if (sessionStorage.getItem(guardKey)) return null;
   sessionStorage.setItem(guardKey, "1");
@@ -597,70 +312,31 @@ export async function exchangeCodeForToken({ code, state }) {
   const url = new URL(`${API_BASE}/auth/sso/callback`);
   url.searchParams.set("code", code);
   if (state) url.searchParams.set("state", state);
-  // Send the SAME redirect_uri you used in /login
   url.searchParams.set("redirect_uri", frontendCallbackUri());
 
   const res = await withTimeout(fetch(url.toString(), {
     method: "GET",
-    credentials: "include",
+    credentials: "omit",
     headers: { Accept: "application/json" },
     cache: "no-store",
   }), 15000);
 
   const ct = res.headers.get("content-type") || "";
   const body = ct.includes("application/json") ? await res.json() : await res.text();
-
   if (!res.ok) {
     const msg = typeof body === "string" ? body : (body?.error || `HTTP ${res.status}`);
     throw new Error(msg);
   }
 
-  // Optional: persist tokens/profile if backend returns them
-  try {
-    const access  = body?.tokens?.access_token || body?.access_token || null;
-    const idToken = body?.tokens?.id_token     || body?.id_token     || null;
-    const profile = body?.claims || body?.user || body?.user_info    || null;
-    if (access)  { localStorage.setItem("jwt", access);      sessionStorage.setItem("jwt", access); }
-    if (idToken) { localStorage.setItem("id_token", idToken); sessionStorage.setItem("id_token", idToken); }
-    if (profile) { const s = JSON.stringify(profile); localStorage.setItem("user_info", s); sessionStorage.setItem("user_info", s); }
-  } catch {}
+  const access  = body?.tokens?.access_token  || body?.access_token  || null;
+  const id      = body?.tokens?.id_token      || body?.id_token      || null;
+  const refresh = body?.tokens?.refresh_token || body?.refresh_token || null;
+  const profile = body?.claims || body?.user || body?.user_info || null;
 
-  return body;
-}
-
-// -------------------------
-// PDF helpers
-// -------------------------
-// CHANGE: utility to fetch PDFs as Blob and an optional downloader
-async function getPdfBlob(path) {
-  const res = await request(path, { headers: { Accept: "application/pdf" } });
-  // request() returns Response for non-JSON; convert it to Blob
-  if (res.blob) return res.blob();
-  // In case request() was changed in future, fallback:
-  return new Blob([res], { type: "application/pdf" });
-}
-
-export async function downloadPdf(path, filename = "ticket.pdf") {
-  const blob = await getPdfBlob(path);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-// -------------------------
-// Small UI helper
-// -------------------------
-export function formatINR(n) {
-  const num = Number(n ?? 0);
-  try {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(num);
-  } catch {
-    const rounded = Math.round(num);
-    return `₹${(isNaN(rounded) ? 0 : rounded).toLocaleString("en-IN")}`;
+  setAuthTokens({ access, id, refresh });
+  if (profile) {
+    const s = JSON.stringify(profile);
+    try { sessionStorage.setItem("user_info", s); localStorage.setItem("user_info", s); } catch {}
   }
+  return { access, id, refresh, profile };
 }

@@ -1,7 +1,7 @@
 export default function Schedule(){
   const days = [
-    {title:'Day 1: Arrival & Awakening', items:[['4:00 PM','Gates Open & Campsite Setup'],['7:00 PM','Opening Ceremony & Sunset Acoustic Set'],['9:00 PM','Main Stage Headliner: The Wandering Souls'] ]},
-    {title:'Day 2: Exploration & Sound', items:[['8:00 AM','Sunrise Yoga & Meditation'],['2:00 PM','Forest Stage: Indie & Folk Showcase'],['8:00 PM','Main Stage Headliner: Echoes of Eden'] ]},
+    {title:'Day 1: Arrival & Awakening', items:[['4:00 PM','Gates Open & Fun Game Activity'],['06:00 PM','Evening Snacks & Sunset Acoustic Set'],['07:00 PM','Panic India & The Missing Link Live'],['10:00 PM','Dinner & Chill'] ]},
+    {title:'Day 2: Exploration & Sound', items:[['8:00 AM','Morning Brew & Vibes'],['10:00 AM','Trek Groups & Sightseeing Circuits'],['2:00 PM','Refuel & Reset (Meal Break)'], ['3:00 PM','Camp Mini-Olympics(Mini-games)'], ['7:00 PM','Musical & DJ Nights '],['10:00 PM','Gala Dinner']]},
     {title:'Day 3: Reflection & Departure', items:[['9:00 AM','Gratitude Circle & Sound Bath'],['11:00 AM','Farewell Brunch & Jam Session'],['2:00 PM','Event Concludes'] ]}
   ]
 
