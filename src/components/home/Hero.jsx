@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import eventImg from '../../assets/event.png'
+import eventImg from '../../assets/Event.png'
 
 const slides = [
   {
