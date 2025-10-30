@@ -14,6 +14,7 @@ export default function Home(){
       <Hero />
       <Stats />
       <About />
+      <div className="h-12 md:h-20 lg:h-28 bg-white" aria-hidden />
       <Highlights />
       <Schedule />
       <Artists />

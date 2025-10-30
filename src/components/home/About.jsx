@@ -4,8 +4,8 @@ export default function About(){
       <div className="mx-auto flex max-w-5xl flex-col gap-12 px-4">
         <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
           <div className="flex flex-col gap-4">
-            <h2 className="font-display text-brandDark text-4xl font-black leading-tight tracking-[-0.033em]">About The Event</h2>
-            <p className="text-brandDark/70 text-base leading-relaxed">
+            <h2 className="font-display text-brandDark text-4xl font-bold leading-tight">About Higway To Heal</h2>
+            <p className="text-black text-base leading-relaxed">
               Highway to Heal is an immersive music-travel experienc part road trip, part intimate live performanc designed to reset your soul in nature with your favorite artists.
 
                   What it aims to do
@@ -42,8 +42,8 @@ export default function About(){
             }}
           />
           <div className="flex flex-col gap-4 md:order-1">
-            <h3 className="font-display text-brandDark text-2xl font-bold leading-tight">Highway To Heal Volume 4.0</h3>
-            <p className="text-brandDark/70 text-base leading-relaxed">
+            <h2 className="font-display text-brandDark text-4xl font-bold leading-tight">Highway To Heal Volume 4.0</h2>
+            <p className="text-black text-base leading-relaxed">
                 Thanks for making Vol. 1.0–3.0 unforgettable. Built on your feedback, Vol. 4.0 is more intimate, immersive, and fun.
 
                 What’s in store

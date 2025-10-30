@@ -7,6 +7,11 @@
   :root {
     color-scheme: light;
 
+    --font-display: "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+                  "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-body: "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+               "Helvetica Neue", Arial, "Noto Sans", sans-seri
+
     /* tokens for aliases below (keep in sync with tailwind.config.js) */
     --brand-dark: 14 61 62;    /* #0E3D3E */
     --offwhite:   247 246 242; /* #F7F6F2 */
@@ -15,18 +20,27 @@
     --primary-b:  55;
   }
 
+  html{
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  }
+
+  .font-display{ font-family: var(--font-display); }
+  .font-body{ font-family: var(--font-body); }
+
   html, body, #root { height: 100%; }
 
   /* Paper + body type - avoid @apply on custom/util classes to prevent build errors */
   body {
     background-color: rgb(var(--offwhite));
     color: rgb(var(--brand-dark));
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    /* font-family: var(--fontbody); */
   }
 
   /* Serif headings fallback (avoid @apply if font-display is a custom utility) */
   h1, h2, h3 {
-    font-family: Georgia, "Times New Roman", Times, serif;
+    font-family: var(--font-display);
   }
 
   /* Material Symbols setup */
