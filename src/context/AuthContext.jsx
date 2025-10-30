@@ -1,100 +1,166 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api, getAccessToken, setAuthTokens, startSSO } from "../api/client";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import { api, getAccessToken, setAuthTokens } from "../api/client";
 
-const AuthCtx = createContext(null);
-
-// Read profile from storage for initial paint
-function readProfile() {
+/** Load profile from storage (kept in client.api) */
+function readStoredProfile() {
   try {
+    if (typeof window === "undefined") return null;
+    const s = sessionStorage.getItem("user_info");
+    if (s) return JSON.parse(s);
+    const l = localStorage.getItem("user_info");
+    if (l) return JSON.parse(l);
+  } catch {}
+  return null;
+}
+
+/** Read ID token from storage (w/ legacy fallback) */
+function readIdToken() {
+  try {
+    if (typeof window === "undefined") return null;
     return (
-      JSON.parse(sessionStorage.getItem("user_info") || "null") ||
-      JSON.parse(localStorage.getItem("user_info") || "null")
+      sessionStorage.getItem("id_jwt") ||
+      localStorage.getItem("id_jwt") ||
+      sessionStorage.getItem("jwt") ||   // legacy (access)
+      localStorage.getItem("jwt")  ||    // legacy
+      null
     );
+  } catch { return null; }
+}
+
+/** Derive minimal profile from ID token if nothing stored */
+function deriveProfileFromIdToken(token) {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return {
+      id: payload?.sub,
+      email: payload?.email || "",
+      username: payload?.["cognito:username"] || payload?.username || "",
+      name: payload?.name || payload?.given_name || "",
+      profile: {
+        full_name: payload?.name || "",
+        email_verified: !!payload?.email_verified,
+        phone_number: payload?.phone_number || "",
+      },
+      _claims: payload, // optional: handy for debugging (don’t render directly)
+    };
   } catch {
     return null;
   }
 }
 
+const AuthCtx = createContext(null);
+
 export function AuthProvider({ children }) {
-  // Initialize from storage so refreshes stay logged in
-  const [token, setToken] = useState(
-    sessionStorage.getItem("jwt") || localStorage.getItem("jwt") || null
-  );
-  const [profile, setProfile] = useState(readProfile());
-  const [loading, setLoading] = useState(true);
+  // token === ID token (primary bearer we attach to APIs)
+  const [token, setTokenState] = useState(readIdToken());
+  const [profile, setProfile]  = useState(readStoredProfile());
+  const [loading, setLoading]  = useState(true);
 
-  // First paint: probe /auth/me using Bearer from client.js
+  const mountedRef = useRef(true);
+
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
-
-    // Listen for token writes from client.js (e.g., after /auth/callback)
-    const onAuthUpdated = async () => {
-      const t = getAccessToken();
-      if (t && !token) setToken(t);
-      await refresh();
-    };
-    window.addEventListener("auth:updated", onAuthUpdated);
-    return () => window.removeEventListener("auth:updated", onAuthUpdated);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
 
-  async function refresh() {
-    try {
-      const me = await api.me(); // uses Bearer header (client.js)
-      setProfile(me || null);
-      try {
-        sessionStorage.setItem("user_info", JSON.stringify(me || null));
-        localStorage.setItem("user_info", JSON.stringify(me || null));
-      } catch {}
-      const t = getAccessToken();
-      if (t && !token) setToken(t);
-      return me || null;
-    } catch {
-      setProfile(null);
+  /** Write-through setter: update state + persist via client */
+  const setToken = useCallback((t) => {
+    const next = t || null;
+    setTokenState(next);
+    setAuthTokens({ id: next }); // keep refresh/access untouched
+  }, []);
+
+  /**
+   * Rehydrate from storage/claims only (NO network).
+   * If no stored user_info, try to decode ID token to build a lightweight profile.
+   */
+  const refresh = useCallback(async () => {
+    const current = getAccessToken() || readIdToken();
+    if (!current) {
+      if (mountedRef.current) setProfile(null);
       return null;
     }
-  }
 
-  async function logout() {
+    const stored = readStoredProfile();
+    if (mountedRef.current) {
+      if (stored) setProfile(stored);
+      else setProfile(deriveProfileFromIdToken(current));
+    }
+    return stored || deriveProfileFromIdToken(current) || null;
+  }, []);
+
+  // Initial boot: if we have a token, hydrate once (no /auth/me)
+  useEffect(() => {
+    (async () => {
+      if (token) await refresh();
+      if (mountedRef.current) setLoading(false);
+    })();
+
+    // Keep context in sync with token/profile changes broadcast by client
+    const onAuthUpdated = async () => {
+      const t = readIdToken();
+      setTokenState((prev) => (prev !== t ? t : prev));
+      await refresh();
+    };
+
+    const onStorage = () => { onAuthUpdated(); };
+
+    window.addEventListener("auth:updated", onAuthUpdated);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("auth:updated", onAuthUpdated);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [refresh, token]);
+
+  const logout = useCallback(async () => {
     try { await api.logout(); } catch {}
-    setAuthTokens({ access: null, refresh: null });
     try {
-      ["sso_state","sso_return_to","jwt","id_token","user_info","refresh_token","cookie_snapshot"]
-        .forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+      [
+        "sso_state","sso_return_to","jwt","id_jwt","id_token",
+        "user_info","refresh_token","cookie_snapshot",
+      ].forEach((k) => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
     } catch {}
-    setToken(null);
-    setProfile(null);
-  }
+    if (mountedRef.current) {
+      setTokenState(null);
+      setProfile(null);
+    }
+  }, []);
 
-  const value = useMemo(() => ({
-  token,
-  // let callback page “wake up” the navbar immediately
-  setToken: (t) => { setToken(t); setAuthTokens({ access: t, refresh: null }); },
+  const value = useMemo(
+    () => ({
+      token,                // ID token (preferred)
+      idToken: token,       // alias
+      setToken,             // allow callback page to set immediately
+      profile, setProfile,  // stored or derived
+      user: profile, setUser: setProfile,
 
-  // current shape
-  profile,
-  setProfile,
+      // actions
+      login: null,          // use startSSO directly where needed (Navbar already does)
+      logout,
+      refresh,              // rehydrate only (no network)
 
-  // ✅ aliases for backward compatibility
-  user: profile,
-  setUser: setProfile,
+      // status
+      loading,
+      isAuthed: !!token || !!(profile && (profile.email || profile.username || profile.name)),
+    }),
+    [token, profile, loading, logout, refresh, setToken]
+  );
 
-  login: startSSO,
-  logout,
-  refresh,
-  loading,
-  isAuthed: !!(profile && (profile.email || profile.username || profile.name)) || !!token,
-}), [token, profile, loading]);
-
-return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
-// ✅ Named hook export
 export function useAuth() {
   const ctx = useContext(AuthCtx);
-  if (!ctx) {
-    throw new Error("useAuth must be used within <AuthProvider>");
-  }
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
 }

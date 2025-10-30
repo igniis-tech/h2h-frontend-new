@@ -1,3 +1,6 @@
+// -------------------------
+// Currency util
+// -------------------------
 export function formatINR(n) {
   const num = Number(n ?? 0);
   try {
@@ -34,7 +37,8 @@ function normalizeApiBase(raw) {
 }
 
 const fromEnvJs = (typeof window !== "undefined" && window._env_?.BACKEND_URL) || "";
-const fromVite  = (import.meta?.env?.VITE_API_BASE) || "";
+// @ts-ignore
+const fromVite  = (typeof import.meta !== "undefined" && import.meta?.env?.VITE_API_BASE) || "";
 export const API_BASE = normalizeApiBase(fromEnvJs || fromVite || "/api");
 
 // -------------------------------------------------
@@ -68,7 +72,6 @@ function emitAuthUpdated() {
 }
 
 function persistTokens({ access, id, refresh } = {}) {
-  // Update in-memory only for keys that were provided
   if (access !== undefined) accessToken  = access;
   if (id     !== undefined) idToken      = id;
   if (refresh!== undefined) refreshToken = refresh;
@@ -94,12 +97,33 @@ export function setAuthTokens({ access, id, refresh } = {}) { persistTokens({ ac
 export function getAccessToken() { return accessToken; }
 export function getIdToken()     { return idToken; }
 
-// Prefer ID token for all endpoints (your backend checks id_token)
+// Prefer ID token for all endpoints unless you specifically need access_token scopes
 function chooseTokenFor(/* url */) {
   return getIdToken() || getAccessToken();
 }
 
-// (optional) refresh flow (if you wire it up server-side)
+// -------------------------
+// Profile helpers (no network)
+// -------------------------
+export function readStoredProfile() {
+  try {
+    const s = sessionStorage.getItem("user_info");
+    if (s) return JSON.parse(s);
+    const l = localStorage.getItem("user_info");
+    if (l) return JSON.parse(l);
+  } catch {}
+  return null;
+}
+
+function syncTokensFromStorage() {
+  try {
+    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || accessToken || null;
+    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || idToken || null;
+    refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || refreshToken || null;
+  } catch {}
+}
+
+// (optional) refresh flow (only if backend supports it)
 let refreshInFlight = null;
 async function refreshAccessToken() {
   if (refreshInFlight) return refreshInFlight;
@@ -132,7 +156,7 @@ async function refreshAccessToken() {
 }
 
 // -------------------------------------------------
-// Core request helper
+// Core request helper (token always attached; no /auth/me ever called here)
 // -------------------------------------------------
 export async function request(path, { method = "GET", body = null, headers = {}, accept = "application/json" } = {}) {
   let url = path.startsWith("http") ? path : `${API_BASE}${path}`;
@@ -183,14 +207,6 @@ export async function request(path, { method = "GET", body = null, headers = {},
 // -------------------------
 // PDF helpers
 // -------------------------
-function syncTokensFromStorage() {
-  try {
-    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || accessToken || null;
-    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || idToken || null;
-    refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || refreshToken || null;
-  } catch {}
-}
-
 async function fetchPdfBlob(path) {
   const url =
     (path.startsWith("http") ? path : `${API_BASE}${path}`) +
@@ -244,16 +260,25 @@ export async function downloadPdf(path, filename = "ticket.pdf") {
 }
 
 // -----------------------------------------------------
-// API wrappers
+// API wrappers (no /auth/me network; returns stored profile)
 // -----------------------------------------------------
 export const api = {
-  me: () => request("/auth/me"),               // uses id_token first
+  // Client-side "me" — reads from storage only
+  me: async () => readStoredProfile(),
+
   logout: async () => {
     try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch {}
     setAuthTokens({ access: null, id: null, refresh: null });
-    try { sessionStorage.removeItem("user_info"); localStorage.removeItem("user_info"); } catch {}
+    try {
+      sessionStorage.removeItem("user_info"); localStorage.removeItem("user_info");
+      sessionStorage.removeItem("jwt"); localStorage.removeItem("jwt");
+      sessionStorage.removeItem("id_jwt"); localStorage.removeItem("id_jwt");
+      sessionStorage.removeItem("refresh_token"); localStorage.removeItem("refresh_token");
+    } catch {}
+    emitAuthUpdated();
     return { ok: true };
   },
+
   ssoAuthorizeUrl: (state, redirectUri) => {
     let url = `${API_BASE}/auth/sso/authorize?state=${encodeURIComponent(state || "")}`;
     if (redirectUri) url += `&redirect_uri=${encodeURIComponent(redirectUri)}`;
@@ -334,9 +359,11 @@ export async function exchangeCodeForToken({ code, state }) {
   const profile = body?.claims || body?.user || body?.user_info || null;
 
   setAuthTokens({ access, id, refresh });
+
   if (profile) {
     const s = JSON.stringify(profile);
     try { sessionStorage.setItem("user_info", s); localStorage.setItem("user_info", s); } catch {}
   }
+  emitAuthUpdated();
   return { access, id, refresh, profile };
 }

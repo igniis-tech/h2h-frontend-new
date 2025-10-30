@@ -1,52 +1,76 @@
-// src/pages/auth/Callback.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { exchangeCodeForToken, getAccessToken } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Callback() {
   const navigate = useNavigate();
-  const { setToken, setProfile, refresh } = useAuth();
+  const { setToken, setProfile } = useAuth();
   const [err, setErr] = useState("");
+  const startedRef = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     (async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         const state = params.get("state");
+        const providerError = params.get("error") || params.get("error_description");
 
+        if (providerError) throw new Error(decodeURIComponent(providerError));
         if (!code) throw new Error("Missing authorization code");
 
-        // 1) Exchange code -> tokens + (maybe) profile
+        // optional state check
+        try {
+          const expected = sessionStorage.getItem("sso_state");
+          if (expected && state && expected !== state) {
+            throw new Error("Invalid sign-in state. Please try again.");
+          }
+        } catch {}
+
         const res = await exchangeCodeForToken({ code, state });
 
-        // 2) Wake up React: make token visible to context immediately
-        const access = res?.access || getAccessToken();
-        if (access) setToken(access);
-
-        // 3) If backend returned profile in callback, hydrate it now
+        const id = res?.id || getAccessToken();
+        if (id) setToken(id);
         if (res?.profile) setProfile(res.profile);
 
-        // 4) Always re-probe /auth/me using Bearer
-        await refresh();
+        const stored = sessionStorage.getItem("sso_return_to") || "/";
+        try {
+          sessionStorage.removeItem("sso_return_to");
+          sessionStorage.removeItem("sso_state");
+          sessionStorage.removeItem(`sso_redeemed_${code}`);
+        } catch {}
 
-        // 5) Redirect where the user started
-        const returnTo = sessionStorage.getItem("sso_return_to") || "/";
-        try { sessionStorage.removeItem("sso_return_to"); } catch {}
-        navigate(returnTo, { replace: true });
+        if (mountedRef.current) navigate(stored.startsWith("/") ? stored : "/", { replace: true });
       } catch (e) {
+        if (!mountedRef.current) return;
         setErr(e?.message || "Login failed");
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate, setProfile, setToken]);
 
   return (
     <div className="py-24 flex items-center justify-center">
       <div className="text-center">
-        <div className="text-lg font-semibold">Finishing sign-in…</div>
-        {err ? <div className="mt-2 text-red-400">{err}</div> : <div className="mt-2 opacity-70">Please wait</div>}
+        <div className="text-lg font-semibold" role="status" aria-busy={err ? "false" : "true"} aria-live="polite">
+          Finishing sign-in…
+        </div>
+        {err ? (
+          <div className="mt-2 text-red-400" role="alert" aria-live="assertive">
+            {err}
+          </div>
+        ) : (
+          <div className="mt-2 opacity-70">Please wait</div>
+        )}
       </div>
     </div>
   );
