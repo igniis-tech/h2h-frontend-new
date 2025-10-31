@@ -181,7 +181,7 @@ export default function Navbar() {
                     ref={firstMenuItemRef}
                     to="/dashboard"
                     role="menuitem"
-                    className="block px-4 py-2 text-sm hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+                    className="block px-4 py-2 text-sm text-black hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
                     onClick={() => setMenuOpen(false)}
                   >
                     My Bookings
@@ -190,7 +190,7 @@ export default function Navbar() {
                     ref={secondMenuItemRef}
                     type="button"
                     role="menuitem"
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+                    className="w-full text-left text-black px-4 py-2 text-sm hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
                     onClick={handleLogout}
                   >
                     Logout

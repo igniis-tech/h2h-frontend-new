@@ -7,6 +7,7 @@ import Schedule from '../components/home/Schedule'
 import Artists from '../components/home/Artists'
 import Location from '../components/home/Location'
 import Pricing from '../components/home/Pricing'
+import WhatsAppFAB from '../components/common/WhatsAppFAB'
 
 export default function Home(){
   return (
@@ -20,6 +21,7 @@ export default function Home(){
       <Artists />
       <Location />
       <Pricing />
+      <WhatsAppFAB phone="+919836007110" />
     </div>
   )
 }

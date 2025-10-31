@@ -6,7 +6,7 @@ export default function Footer() {
         <p className="opacity-90">
           Purulia, Barabhum • 24–26 Jan • <a
             className="text-primary hover:text-primary/90 underline"
-            href="https://maps.app.goo.gl/jpsQoYXZVxjFiwGE9?g_st=aw" target="_blank" rel="noreferrer">Google Map</a>
+            href="https://www.google.com/maps/dir//Sonkupi%20Banjara%20camp%20,%20Bagmundi%20Purulia" target="_blank" rel="noreferrer">Google Map</a>
         </p>
       </div>
     </footer>
