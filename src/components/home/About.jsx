@@ -1,3 +1,4 @@
+import about from '../../assets/about.jpeg';
 export default function About(){
   return (
     <section className="section bg-white" id="about">
@@ -30,7 +31,7 @@ export default function About(){
           <div
             className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl"
             style={{
-              backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAyKPA0hz_GXsIfr_MgE8FiCN5jpCTjvBvpl9qDX1ybVQssoyfjmGb7cjYj6euFQG8jCeA9X4RgO_3VWArK1BYpLUA9lJSGdz99URvklS7vngQ9t_PdhRsBFxp3VtLr18tlSuc11xla-V4_DE0041ekJmg_hryXtNq-EZG5GA8bXIchYe9QllUb4WCoss0BVFg7q2J2w0K4bSrX-BuF9FSzfxmxt_s9jQJJDTfV_QZnjBEteaah68hK_VUDQ6MM1ukLIEgI0h7Fp6I')"
+              backgroundImage: `url(${about})`
             }}
           />
         </div>
