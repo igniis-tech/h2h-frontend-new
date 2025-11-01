@@ -6,16 +6,16 @@ import TicketCard from '../components/TicketCard'
 function BookingRow({ b, onViewTicket, onDownloadTicket }) {
   const paid = b?.order?.paid ?? b?.paid
   return (
-    <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/60">
+    <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-slate-100 font-bold">Booking #{b.id} • {b?.event?.name || 'Highway to Heal'}</div>
-          <div className="text-slate-400 text-sm">Tickets: {b?.guests ?? '—'} • Paid: {paid ? 'Yes' : 'No'}</div>
-          {b?.pricing_total_inr && <div className="text-slate-400 text-sm mt-1">Total: {formatINR(b.pricing_total_inr)}</div>}
+          <div className="text-forest font-bold">Booking #{b.id} • {b?.event?.name || 'Highway to Heal'}</div>
+          <div className="text-forest/70 text-sm">Tickets: {b?.guests ?? '—'} • Paid: {paid ? 'Yes' : 'No'}</div>
+          {b?.pricing_total_inr && <div className="text-forest/70 text-sm mt-1">Total: {formatINR(b.pricing_total_inr)}</div>}
         </div>
         <div className="flex gap-2">
-          <button onClick={()=>onViewTicket(b)} className="rounded-xl px-4 py-2 bg-slate-800 text-slate-200 hover:bg-slate-700">View Ticket</button>
-          <button onClick={()=>onDownloadTicket(b)} className="rounded-xl px-4 py-2 bg-dashPrimary text-slate-950 hover:bg-emerald-400">Download Ticket</button>
+          <button onClick={()=>onViewTicket(b)} className="rounded-xl px-4 py-2 border-2 border-forest text-forest bg-transparent hover:bg-forest/5">View Ticket</button>
+          <button onClick={()=>onDownloadTicket(b)} className="rounded-xl px-4 py-2 bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90">Download Ticket</button>
         </div>
       </div>
     </div>
@@ -66,22 +66,22 @@ export default function Dashboard(){
   }
 
   return (
-    <div className="py-10">
+    <div className="pt-28 md:pt-32 pb-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold">Your Profile</h1>
-          <p className="text-slate-400">View your profile and bookings.</p>
+          <h1 className="text-3xl font-extrabold text-forest">Your Profile</h1>
+          <p className="text-forest/70">View your profile and bookings.</p>
         </div>
 
         <UserProfile />
 
         {loading ? (
-          <div className="rounded-2xl border border-slate-800 p-8 bg-slate-900/60 animate-pulse text-slate-400">Loading your bookings…</div>
+          <div className="rounded-2xl border border-forest/20 p-8 bg-offwhite animate-pulse text-forest/70">Loading your bookings…</div>
         ) : err ? (
-          <div className="rounded-2xl border border-rose-700 bg-rose-900/20 text-rose-200 px-4 py-3">{err}</div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3">{err}</div>
         ) : bookings.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 p-8 bg-slate-900/60">
-            <p className="text-slate-300">No bookings found yet. Go to Register and complete your payment.</p>
+          <div className="rounded-2xl border border-forest/20 p-8 bg-offwhite">
+            <p className="text-forest/80">No bookings found yet. Go to Register and complete your payment.</p>
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-6">
@@ -102,14 +102,14 @@ function UserProfile(){
   const { user } = useAuth()
   if (!user) return null
   return (
-    <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/60 mb-6">
-      <h2 className="text-xl font-bold text-slate-100">Profile</h2>
-      <div className="mt-3 text-slate-300">
-        <div><span className="text-slate-400">Username:</span> {user.username || user.id || '—'}</div>
-        {user.email && <div><span className="text-slate-400">Email:</span> {user.email}</div>}
-        {user.first_name && <div><span className="text-slate-400">First name:</span> {user.first_name}</div>}
-        {user.last_name && <div><span className="text-slate-400">Last name:</span> {user.last_name}</div>}
-        {user.profile && user.profile.full_name && <div><span className="text-slate-400">Full name:</span> {user.profile.full_name}</div>}
+    <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite mb-6">
+      <h2 className="text-xl font-bold text-forest">Profile</h2>
+      <div className="mt-3 text-forest">
+        <div><span className="text-forest/70">Username:</span> {user.username || user.id || '—'}</div>
+        {user.email && <div><span className="text-forest/70">Email:</span> {user.email}</div>}
+        {user.first_name && <div><span className="text-forest/70">First name:</span> {user.first_name}</div>}
+        {user.last_name && <div><span className="text-forest/70">Last name:</span> {user.last_name}</div>}
+        {user.profile && user.profile.full_name && <div><span className="text-forest/70">Full name:</span> {user.profile.full_name}</div>}
       </div>
     </div>
   )

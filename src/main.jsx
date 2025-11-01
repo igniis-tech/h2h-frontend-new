@@ -19,7 +19,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 function Layout({ children }) {
   return (
-    <div className="min-h-screen font-body bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen font-body bg-offwhite text-forest">
       <Navbar />
       <main>{children}</main>
       <Footer />
@@ -62,7 +62,7 @@ function App() {
               <Layout>
                 <div className="py-20 text-center">
                   <h1 className="text-3xl font-extrabold">404</h1>
-                  <p className="text-white/70 mt-2">This page does not exist.</p>
+                  <p className="text-forest/70 mt-2">This page does not exist.</p>
                 </div>
               </Layout>
             }

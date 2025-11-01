@@ -14,7 +14,7 @@ const PLATFORM_FEE_RATE = 0.02; // 2%
 const GST_ON_FEE = 0.18; // 18%
 
 // ---------- unified, BLACK text field styles ----------
-const labelCls = 'block text-sm text-slate-200 mb-1'
+const labelCls = 'block text-sm text-forest mb-1'
 const inputCls =
   'w-full rounded-xl bg-white border border-slate-300 text-black ' +
   'placeholder:text-slate-600 px-4 py-3 outline-none focus:ring-2 focus:ring-bookingPrimary'
@@ -388,25 +388,25 @@ export default function Register() {
   const submitDisabled = loading || !accept || !selectedPkg || selectedPkg.price_inr == null
 
   return (
-    <div className="py-12">
+    <div className="pt-28 md:pt-32 pb-12">
       <style>{`
         select, input, textarea { color:#000; }
         select option { background:#ffffff; color:#000000; }
-        input::placeholder { color: #f3f4f5ff; }
+        input::placeholder { color: #6b7280; }
       `}</style>
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-slate-800 overflow-hidden">
-          <div className="p-6 sm:px-10 sm:py-10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="rounded-3xl border border-forest/20 overflow-hidden">
+          <div className="p-6 sm:px-10 sm:py-10 bg-white text-forest">
             <h1 className="text-3xl sm:text-4xl font-extrabold">Register for Highway to Heal</h1>
-            <p className="mt-3 text-slate-400">
+            <p className="mt-3 text-forest/70">
               24–26 January • Purulia, Barabhum • {selectedPkg ? fmt(selectedPkg.price_inr) : '—'} base
             </p>
 
             {/* Payment status banner */}
             {!!payBanner && (
               payBanner.status === 'success' ? (
-                <div className="mt-6 rounded-xl border border-emerald-700 bg-emerald-900/20 text-emerald-200 px-4 py-3">
+                <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3">
                   <div className="font-semibold">Payment successful!</div>
                   <div className="text-sm mt-1">
                     {payBanner.bookingId ? <>Booking ID: <b>{payBanner.bookingId}</b></> : 'Your booking is confirmed.'}
@@ -421,11 +421,11 @@ export default function Register() {
                         Download Ticket (PDF)
                       </button>
                     )}
-                    <Link to="/" className="text-slate-300 underline">Go to Home</Link>
+                    <Link to="/" className="text-forest underline">Go to Home</Link>
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 rounded-xl border border-rose-700 bg-rose-900/20 text-rose-200 px-4 py-3">
+                <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3">
                   <div className="font-semibold">Payment failed</div>
                   <div className="text-sm mt-1">
                     {payBanner.reason ? <>Reason: <b>{String(payBanner.reason)}</b></> : 'We could not verify the payment.'}
@@ -515,7 +515,7 @@ export default function Register() {
                   </select>
 
                   {selectedPkg && (
-                    <div className="mt-2 text-xs text-slate-400">
+                    <div className="mt-2 text-xs text-forest/70">
                       {(() => {
                         const base = selectedPkg.base_includes ?? 1;
                         const ea   = selectedPkg.extra_price_adult_inr ?? selectedPkg.price_inr;
@@ -530,14 +530,14 @@ export default function Register() {
               </div>
 
               {/* Guests & companions */}
-              <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/40">
+              <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-slate-300 text-sm">Guests (Primary + named companions)</div>
-                    <div className="text-slate-400 text-sm mt-2">Total: <b>{guestsCount}</b></div>
+                    <div className="text-forest/80 text-sm">Guests (Primary + named companions)</div>
+                    <div className="text-forest/70 text-sm mt-2">Total: <b>{guestsCount}</b></div>
                   </div>
                   <div className="text-right">
-                    <div className="text-slate-300 text-sm">Subtotal (before promo)</div>
+                    <div className="text-forest/80 text-sm">Subtotal (before promo)</div>
                     <div className="text-2xl font-black">{fmt(totalCostBase)}</div>
                   </div>
                 </div>
@@ -546,7 +546,7 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setCompanions(prev => [...prev, { name: '', age: '', blood_group: '', gender: 'O', meal_preference: '' }])} // meal blank
-                    className="rounded-xl px-3 py-2 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                    className="rounded-xl px-3 py-2 border-2 border-forest text-forest bg-transparent hover:bg-forest/5"
                   >
                     Add Companion
                   </button>
@@ -587,8 +587,8 @@ export default function Register() {
               {/* PROMO */}
               {promoAllowed && (
                 <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/40">
-                    <div className="text-slate-300 text-sm mb-2">Promo Code</div>
+                  <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite">
+                    <div className="text-forest/80 text-sm mb-2">Promo Code</div>
                     <div className="flex gap-3">
                       <input
                         value={promoInput}
@@ -608,13 +608,13 @@ export default function Register() {
                         <button
                           type="button"
                           onClick={onClearPromo}
-                          className="rounded-xl px-4 py-2 border border-slate-600 text-slate-200 hover:bg-slate-800"
+                          className="rounded-xl px-4 py-2 border-2 border-forest text-forest hover:bg-forest/5"
                         >
                           Remove
                         </button>
                       )}
                     </div>
-                    {promoError && <div className="mt-2 text-sm text-rose-400">{promoError}</div>}
+                    {promoError && <div className="mt-2 text-sm text-rose-600">{promoError}</div>}
                     {promoPreview && promoPreview.valid && (
                       <div className="mt-2 text-sm text-bookingPrimary">
                         Discount: {formatINR(promoPreview.discount_inr)} • New total: <b>{formatINR(promoPreview.final_inr)}</b>
@@ -625,37 +625,37 @@ export default function Register() {
               )}
 
               {/* Total with convenience fee & GST */}
-              <div className="rounded-2xl bg-slate-900/40 border border-slate-800 p-5">
+              <div className="rounded-2xl bg-offwhite border border-forest/20 p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="text-slate-300 text-sm">Subtotal (after promo)</div>
-                  <div className="text-slate-200 font-medium">{fmt(totalCost)}</div>
+                  <div className="text-forest/80 text-sm">Subtotal (after promo)</div>
+                  <div className="text-forest font-medium">{fmt(totalCost)}</div>
                 </div>
 
                 <div className="mt-2 flex items-center justify-between gap-4">
-                  <div className="text-slate-300 text-sm">Convenience fee (online processing)</div>
-                  <div className="text-slate-200 font-medium">{formatINR(feeCalc.fee)}</div>
+                  <div className="text-forest/80 text-sm">Convenience fee (online processing)</div>
+                  <div className="text-forest font-medium">{formatINR(feeCalc.fee)}</div>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between gap-4">
-                  <div className="text-slate-400 text-xs">GST {Math.round(GST_ON_FEE * 100)}% on processing fee</div>
-                  <div className="text-slate-300 text-sm">{formatINR(feeCalc.gst)}</div>
+                  <div className="text-forest/70 text-xs">GST {Math.round(GST_ON_FEE * 100)}% on processing fee</div>
+                  <div className="text-forest/80 text-sm">{formatINR(feeCalc.gst)}</div>
                 </div>
 
-                <div className="mt-3 border-t border-slate-700 pt-3 flex items-center justify-between gap-4">
+                <div className="mt-3 border-t border-forest/20 pt-3 flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-slate-300 text-sm">Payable now</div>
-                    <div className="text-xs text-slate-500">Estimated</div>
+                    <div className="text-forest/80 text-sm">Payable now</div>
+                    <div className="text-xs text-forest/70">Estimated</div>
                   </div>
                   <div className="text-2xl font-black">{formatINR(feeCalc.gross)}</div>
                 </div>
 
-                <div className="mt-3 text-right text-slate-400 text-sm">
+                <div className="mt-3 text-right text-forest/70 text-sm">
                   Inclusive of accommodation, meals & performances
                 </div>
               </div>
 
               {/* Sightseeing */}
-              <label className="flex items-start gap-3 text-slate-300 text-sm">
+              <label className="flex items-start gap-3 text-forest text-sm">
                 <input
                   type="checkbox"
                   checked={wantSightseeing}
@@ -664,13 +664,13 @@ export default function Register() {
                 />
                 <span>
                   I’d like to join the <b>Sightseeing</b> add-on.
-                  <div className="text-slate-400 text-xs mt-1">
+                  <div className="text-forest/70 text-xs mt-1">
                     We’ll reserve your spot now, and <b>you’ll pay at the venue</b>. No online charge for sightseeing.
                   </div>
                 </span>
               </label>
 
-              <label className="flex items-start gap-3 text-slate-300 text-sm">
+              <label className="flex items-start gap-3 text-forest text-sm">
                 <input type="checkbox" checked={accept} onChange={e => setAccept(e.target.checked)}
                        className="mt-1 h-4 w-4 rounded border-slate-700 bg-white" />
                 <span>I agree to the <a className="text-bookingPrimary underline" href="#!">terms & conditions</a>.</span>
@@ -678,21 +678,21 @@ export default function Register() {
 
               {/* breakdown */}
               {pricing?.rows?.length ? (
-                <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/40">
-                  <div className="text-slate-300 text-sm mb-2">Price Breakdown</div>
+                <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite">
+                  <div className="text-forest/80 text-sm mb-2">Price Breakdown</div>
                   <div className="grid gap-1">
                     {pricing.rows.map((r, idx) => (
                       <div key={idx} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-300">{r.label}</span>
-                        <span className="text-slate-200 font-medium">{formatINR(r.amount)}</span>
+                        <span className="text-forest/80">{r.label}</span>
+                        <span className="text-forest font-medium">{formatINR(r.amount)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : null}
 
-              {err && <div className="rounded-xl border border-rose-700 bg-rose-900/20 text-rose-200 px-4 py-3">{err}</div>}
-              {resp && <div className="rounded-xl border border-bookingPrimary bg-emerald-900/20 text-emerald-200 px-4 py-3">
+              {err && <div className="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3">{err}</div>}
+              {resp && <div className="rounded-xl border border-bookingPrimary bg-bookingPrimary/10 text-forest px-4 py-3">
                 Booking created! {resp?.id ? <><span className="ml-1">ID: <b>{resp.id}</b></span></> : null}
               </div>}
 
@@ -701,7 +701,7 @@ export default function Register() {
                         className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold shadow-lg ${submitDisabled ? 'bg-slate-700 text-slate-300 cursor-not-allowed' : 'bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90 shadow-emerald-800/30'}`}>
                   {loading ? 'Processing...' : 'Confirm & Pay'}
                 </button>
-                <Link to="/" className="text-slate-300 hover:text-slate-100 underline">Back to Home</Link>
+                <Link to="/" className="text-forest hover:opacity-80 underline">Back to Home</Link>
               </div>
             </form>
           </div>

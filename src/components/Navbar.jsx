@@ -119,7 +119,7 @@ export default function Navbar() {
 
   const initials = useMemo(() => initialsFrom(profile), [profile]);
 
-  const linkBase = scrolled ? "text-slate-800" : "text-white";
+  const linkBase = "text-forest";
   const linkCls = useMemo(
     () => `${linkBase} hover:opacity-80 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/40`,
     [linkBase]
@@ -130,7 +130,7 @@ export default function Navbar() {
   const mobileMenuId = "mobile-menu";
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all ${scrolled ? "bg-white/95 shadow" : "bg-transparent"}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all bg-transparent`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 md:px-10">
         <Link to="/" className="flex items-center gap-3" aria-label="Go to homepage">
           <img src={logo} alt="Highway to Heal" className="h-10 w-auto object-contain hover:opacity-90 transition" decoding="async" />
@@ -150,7 +150,7 @@ export default function Navbar() {
                 ref={avatarBtnRef}
                 type="button"
                 className={`rounded-full w-9 h-9 grid place-items-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                  scrolled ? "bg-slate-900 text-black" : "bg-white/90 text-slate-900"
+                  scrolled ? "bg-forest text-offwhite" : "bg-white/90 text-slate-900"
                 } hover:scale-105 transition`}
                 onClick={toggleMenu}
                 aria-haspopup="menu"
@@ -200,7 +200,7 @@ export default function Navbar() {
           ) : (
             <button
               type="button"
-              className="rounded-full px-5 py-2 font-semibold border-2 border-black text-black bg-transparent hover:bg-black/5 transition disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/40"
+              className="rounded-full px-5 py-2 font-semibold border-2 border-forest text-forest bg-transparent hover:bg-forest/5 transition disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-forest/40"
               onClick={handleLogin}
               disabled={loggingIn || loading}
               aria-busy={loggingIn ? "true" : "false"}
@@ -210,97 +210,89 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          aria-controls={mobileMenuId}
-          aria-expanded={open}
-          className={`md:hidden rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-            scrolled ? "text-slate-800" : "text-white"
-          }`}
-          onClick={toggleMobile}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-            <rect x="3" y="6" width="18" height="2" rx="1" />
-            <rect x="3" y="11" width="18" height="2" rx="1" />
-            <rect x="3" y="16" width="18" height="2" rx="1" />
-          </svg>
-        </button>
-      </div>
+      {/* Mobile hamburger */}
+      <button
+        type="button"
+        aria-label="Toggle menu"
+        aria-controls={mobileMenuId}
+        aria-expanded={open}
+        className={`md:hidden rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 text-forest`}
+        onClick={toggleMobile}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+          <rect x="3" y="6" width="18" height="2" rx="1" />
+          <rect x="3" y="11" width="18" height="2" rx="1" />
+          <rect x="3" y="16" width="18" height="2" rx="1" />
+        </svg>
+      </button>
+    </div>
 
-      {open && (
-        <div
-          id={mobileMenuId}
-          className={`md:hidden ${scrolled ? "bg-white/95" : "bg-black/70 backdrop-blur"} border-t border-white/10`}
-          role="navigation"
-          aria-label="Primary mobile"
-        >
-          <div className="container py-3">
-            <nav className="flex flex-col gap-3 text-sm">
-              <a href="#about" className={`${scrolled ? "text-slate-800" : "text-white"} py-1`} onClick={onHashClick}>About</a>
-              <a href="#journey" className={`${scrolled ? "text-slate-800" : "text-white"} py-1`} onClick={onHashClick}>The Journey</a>
-              <a href="#events" className={`${scrolled ? "text-slate-800" : "text-white"} py-1`} onClick={onHashClick}>Event Details</a>
-              <Link to="/register" className={`${scrolled ? "text-slate-800" : "text-white"} py-1`} onClick={() => setOpen(false)}>Book Now</Link>
+    {open && (
+      <div
+        id={mobileMenuId}
+        className={`md:hidden bg-transparent`}
+        role="navigation"
+        aria-label="Primary mobile"
+      >
+        <div className="container py-3">
+          <nav className="flex flex-col gap-3 text-sm">
+            <a href="#about" className={`text-forest py-1`} onClick={onHashClick}>About</a>
+            <a href="#journey" className={`text-forest py-1`} onClick={onHashClick}>The Journey</a>
+            <a href="#events" className={`text-forest py-1`} onClick={onHashClick}>Event Details</a>
+            <Link to="/register" className={`text-forest py-1`} onClick={() => setOpen(false)}>Book Now</Link>
 
-              {/* UPDATED MOBILE USER SECTION */}
-              <div className="pt-3">
-                {showAvatar ? (
-                  <div className="flex flex-col gap-3">
-                    {/* avatar + name */}
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="rounded-full w-9 h-9 grid place-items-center font-semibold bg-white/90 text-slate-900"
-                        title={displayOf(profile)}
-                        aria-hidden="true"
-                      >
-                        {initials ? initials : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-                            <path d="M12 12c2.8 0 5-2.7 5-6s-2.2-5-5-5-5 2.7-5 6 2.2 5 5 5Zm0 2c-4.4 0-8 2.7-8 6v1h16v-1c0-3.3-3.6-6-8-6Z"/>
-                          </svg>
-                        )}
-                      </div>
-                      <div className={`${scrolled ? "text-slate-800" : "text-white"} min-w-0`}>
-                        <div className="text-sm font-medium truncate">{displayOf(profile)}</div>
-                        <div className="text-xs opacity-70">Signed in</div>
-                      </div>
+            <div className="pt-3">
+              {showAvatar ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="rounded-full w-9 h-9 grid place-items-center font-semibold bg-white/90 text-forest"
+                      title={displayOf(profile)}
+                      aria-hidden="true"
+                    >
+                      {initials ? initials : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                          <path d="M12 12c2.8 0 5-2.7 5-6s-2.2-5-5-5-5 2.7-5 6 2.2 5 5 5Zm0 2c-4.4 0-8 2.7-8 6v1h16v-1c0-3.3-3.6-6-8-6Z"/>
+                        </svg>
+                      )}
                     </div>
-
-                    {/* actions */}
-                    <Link
-                      to="/dashboard"
-                      className="w-full rounded-full px-5 py-2 font-semibold bg-white text-black border border-slate-200 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/40"
-                      onClick={() => setOpen(false)}
-                    >
-                      My Bookings
-                    </Link>
-
-                    <button
-                      type="button"
-                      className="w-full rounded-full px-5 py-2 font-semibold bg-white text-black border border-slate-200 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/40"
-                      onClick={async () => { setOpen(false); await handleLogout(); }}
-                    >
-                      Logout
-                    </button>
+                    <div className="text-forest min-w-0">
+                      <div className="text-sm font-medium truncate">{displayOf(profile)}</div>
+                      <div className="text-xs opacity-70">Signed in</div>
+                    </div>
                   </div>
-                ) : (
+
+                  <Link
+                    to="/dashboard"
+                    className="w-full rounded-full px-5 py-2 font-semibold bg-white text-forest border border-slate-200 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-forest/40"
+                    onClick={() => setOpen(false)}
+                  >
+                    My Bookings
+                  </Link>
+
                   <button
                     type="button"
-                    className="w-full rounded-full px-5 py-2 font-semibold border-2 border-black text-black bg-transparent hover:bg-black/5 transition disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/40"
-                    onClick={async () => { setOpen(false); await handleLogin(); }}
-                    disabled={loggingIn || loading}
-                    aria-busy={loggingIn ? "true" : "false"}
+                    className="w-full rounded-full px-5 py-2 font-semibold border-2 border-forest text-forest bg-transparent hover:bg-forest/5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-forest/40"
+                    onClick={async () => { setOpen(false); await handleLogout(); }}
                   >
-                    {loggingIn ? "Redirecting…" : "Login"}
+                    Logout
                   </button>
-                )}
-              </div>
-              {/* END UPDATED MOBILE USER SECTION */}
-            </nav>
-          </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="w-full rounded-full px-5 py-2 font-semibold border-2 border-forest text-forest bg-transparent hover:bg-forest/5 transition disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-forest/40"
+                  onClick={async () => { setOpen(false); await handleLogin(); }}
+                  disabled={loggingIn || loading}
+                  aria-busy={loggingIn ? "true" : "false"}
+                >
+                  {loggingIn ? "Redirecting…" : "Login"}
+                </button>
+              )}
+            </div>
+          </nav>
         </div>
-      )}
-      
-    </header>
-  );
-}
+      </div>
+    )}
+  </header>
+)};
