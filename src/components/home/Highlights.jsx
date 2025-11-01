@@ -18,7 +18,7 @@ export default function Highlights(){
 
         {/* container around the block */}
         <div className="rounded-2xl border border-earthy/60 bg-blueback p-4 sm:p-6 md:p-8 shadow-sm">
-          <h2 className="text-3xl md:text-4xl font-bold text-forest mb-6 md:mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-forest mb-6 md:mb-8 text-center">
             Your Unforgettable Journey Begins
           </h2>
 

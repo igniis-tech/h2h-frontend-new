@@ -1,7 +1,7 @@
 import p1 from '../../assets/artist/lakkhichhara.webp'
 import p2 from '../../assets/artist/missing.webp'
 import p3 from '../../assets/artist/panic.webp'
-import p4 from '../../assets/artist/raahi.webp'
+import p4 from '../../assets/artist/raahi2.webp'
 import p5 from '../../assets/artist/djpuja.webp'
 
 
