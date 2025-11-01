@@ -13,6 +13,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
 import Callback from "./pages/auth/Callback";
+import Policy from "./pages/Policy";
+import Refund from "./pages/Refund";
 import { AuthProvider } from "./context/AuthContext";
 
 function Layout({ children }) {
@@ -34,6 +36,10 @@ function App() {
           <Route path="/" element={<Layout><Home /></Layout>} />
           <Route path="/register" element={<Layout><Register /></Layout>} />
           <Route path="/login" element={<Layout><Login /></Layout>} />
+
+          {/* Legal */}
+          <Route path="/policy" element={<Layout><Policy /></Layout>} />
+          <Route path="/refund" element={<Layout><Refund /></Layout>} />
 
           {/* ⬇️ MUST exist publicly and match your redirect_uri */}
           <Route path="/auth/callback" element={<Layout><Callback /></Layout>} />
