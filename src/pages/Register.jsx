@@ -6,10 +6,8 @@ const PRICE_PER_PERSON = 6499
 
 // Meal choices used for both primary + companions
 const MEAL_OPTS = [
-  { v: 'NONE', label: 'No preference' },
   { v: 'VEG',  label: 'Veg' },
   { v: 'NON_VEG', label: 'Non-Veg' },
-  { v: 'JAIN', label: 'Jain' },
 ]
 
 // ---- Convenience fee config (KEEP IN SYNC WITH BACKEND) ----
@@ -317,7 +315,7 @@ export default function Register(){
       <style>{`
         select, input, textarea { color:#000; }
         select option { background:#ffffff; color:#000000; }
-        input::placeholder { color: #475569; } /* slate-600 */
+        input::placeholder { color: #f3f4f5ff; } /* slate-600 */
       `}</style>
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -514,7 +512,7 @@ export default function Register(){
               </div>
 
               {/* Optional: Payment method hint (affects backend fee rate selection) */}
-              <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/40">
+              {/* <div className="rounded-2xl border border-slate-800 p-5 bg-slate-900/40">
                 <label className={labelCls}>Preferred online payment method</label>
                 <select
                   value={assumeMethod}
@@ -528,7 +526,7 @@ export default function Register(){
                 <div className="mt-2 text-xs text-slate-400">
                   Convenience fee shown below is an estimate; final split is confirmed on the payment page.
                 </div>
-              </div>
+              </div> */}
 
               {/* pricing breakdown table */}
               {pricing?.rows?.length ? (
