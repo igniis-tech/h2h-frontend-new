@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, formatINR, API_BASE } from '../api/client'
+import { useAuth } from '../context/AuthContext'
+import LoginModal from '../components/LoginModal'
 
 // ---- Allowed meal enums (must match backend) ----
 const MEAL_VALUES = ['VEG', 'NON_VEG']
@@ -35,6 +37,9 @@ function normalizeMeal(val) {
 
 export default function Register() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthed, loading: authLoading } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const [packages, setPackages] = useState([])
   const [eventId, setEventId] = useState(null)
@@ -97,6 +102,12 @@ export default function Register() {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  // auth gate: show login modal if user is not authenticated
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthed) setLoginOpen(true);
+  }, [authLoading, isAuthed]);
 
   // preserve selection or default to first package
   useEffect(() => {
@@ -304,6 +315,11 @@ export default function Register() {
   async function onSubmit(e) {
     e.preventDefault()
     setErr(''); setResp(null)
+
+    if (authLoading || !isAuthed) {
+      setLoginOpen(true);
+      return;
+    }
 
     if (!accept) { setErr('Please accept the terms & conditions.'); return }
     if (!fullName || !email || !phone) { setErr('Please fill in your name, email, and phone.'); return }
@@ -707,6 +723,10 @@ export default function Register() {
           </div>
         </div>
       </div>
+      <LoginModal
+        open={loginOpen}
+        onClose={() => { setLoginOpen(false); navigate('/login', { replace: true, state: { from: location } }); }}
+      />
     </div>
   )
 }

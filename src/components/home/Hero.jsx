@@ -93,7 +93,7 @@ export default function Hero() {
       {/* Bottom bar: CTA */}
       <div className="absolute inset-x-0 bottom-6 sm:bottom-8 z-20 flex flex-col items-center gap-3">
         <Link
-          to="/booking"
+          to="/register"
           className="inline-flex items-center justify-center rounded-xl px-6 py-3
                bg-forest text-offwhite font-semibold shadow-sm transition
                hover:opacity-90 active:translate-y-px

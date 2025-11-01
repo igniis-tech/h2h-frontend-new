@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { startSSO } from "../api/client";
+import LoginModal from "./LoginModal";
 
 // Works for both shapes: { user: {...} } and a flat { ... }
 function getPerson(p) { return (p && (p.user || p.data || p)) || null; }
@@ -31,6 +32,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const avatarBtnRef = useRef(null);
   const menuRef = useRef(null);
@@ -96,11 +98,16 @@ export default function Navbar() {
     const href = e.currentTarget.getAttribute("href");
     if (href?.startsWith("#")) {
       e.preventDefault();
+      if (location.pathname !== "/") {
+        navigate(`/${href}`);
+        setOpen(false);
+        return;
+      }
       const el = document.querySelector(href);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       setOpen(false);
     }
-  }, []);
+  }, [location.pathname, navigate]);
 
   const toggleMobile = useCallback(() => setOpen((o) => !o), []);
   const toggleMenu = useCallback(() => setMenuOpen((o) => !o), []);
@@ -117,6 +124,13 @@ export default function Navbar() {
     navigate("/", { replace: true });
   }, [logout, navigate]);
 
+  const onBookNowClick = useCallback((e) => {
+    if (!isAuthed) {
+      e.preventDefault();
+      setLoginOpen(true);
+    }
+  }, [isAuthed]);
+
   const initials = useMemo(() => initialsFrom(profile), [profile]);
 
   const linkBase = "text-forest";
@@ -130,7 +144,7 @@ export default function Navbar() {
   const mobileMenuId = "mobile-menu";
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all bg-transparent`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all ${scrolled ? "backdrop-blur-md bg-white/70 border-b border-white/30 shadow-sm" : "bg-transparent"}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 md:px-10">
         <Link to="/" className="flex items-center gap-3" aria-label="Go to homepage">
           <img src={logo} alt="Highway to Heal" className="h-10 w-auto object-contain hover:opacity-90 transition" decoding="async" />
@@ -139,8 +153,8 @@ export default function Navbar() {
         <nav className="hidden md:flex items-center justify-center gap-10 text-base font-medium" role="navigation" aria-label="Primary">
           <a href="#about" className={linkCls} onClick={onHashClick}>About</a>
           <a href="#journey" className={linkCls} onClick={onHashClick}>The Journey</a>
-          <a href="#events" className={linkCls} onClick={onHashClick}>Event Details</a>
-          <Link to="/register" className={linkCls}>Book Now</Link>
+          <a href="#schedule" className={linkCls} onClick={onHashClick}>Event schedule</a>
+          <Link to="/register" className={linkCls} onClick={onBookNowClick}>Book Now</Link>
         </nav>
 
         <div className="hidden md:flex items-center justify-end gap-3 relative min-w-[120px]">
@@ -239,7 +253,16 @@ export default function Navbar() {
             <a href="#about" className={`text-forest py-1`} onClick={onHashClick}>About</a>
             <a href="#journey" className={`text-forest py-1`} onClick={onHashClick}>The Journey</a>
             <a href="#events" className={`text-forest py-1`} onClick={onHashClick}>Event Details</a>
-            <Link to="/register" className={`text-forest py-1`} onClick={() => setOpen(false)}>Book Now</Link>
+            <Link
+              to="/register"
+              className={`text-forest py-1`}
+              onClick={(e) => {
+                if (!isAuthed) { e.preventDefault(); setOpen(false); setLoginOpen(true); }
+                else { setOpen(false); }
+              }}
+            >
+              Book Now
+            </Link>
 
             <div className="pt-3">
               {showAvatar ? (
@@ -294,5 +317,10 @@ export default function Navbar() {
         </div>
       </div>
     )}
+    <LoginModal
+      open={loginOpen}
+      onClose={() => { setLoginOpen(false); navigate('/login', { replace: true, state: { from: location } }); }}
+    />
   </header>
-)};
+);
+};

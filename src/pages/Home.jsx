@@ -1,4 +1,5 @@
-
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Hero from '../components/home/Hero'
 import Stats from '../components/home/Stats'
 import About from '../components/home/About'
@@ -10,6 +11,17 @@ import Pricing from '../components/home/Pricing'
 import WhatsAppFAB from '../components/common/WhatsAppFAB'
 
 export default function Home(){
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.querySelector(location.hash);
+      if (el) {
+        // Delay to ensure content is rendered before scrolling
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+      }
+    }
+  }, [location.hash]);
   return (
     <div className="font-body">
       <Hero />
