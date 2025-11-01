@@ -66,9 +66,8 @@ export default function PackageGrid({ showHeader = false }) {
       {packages.map((p) => (
         <div
           key={p.id || p.name}
-          className={`flex flex-col rounded-xl border-2 ${
-            p.featured ? "border-primary bg-forest/10" : "border-earthy/60 bg-forest/5"
-          } p-8`}
+          className={`flex flex-col rounded-xl border-2 ${p.featured ? "border-primary bg-forest/10" : "border-earthy/60 bg-forest/5"
+            } p-8`}
         >
           <h3 className="text-primary text-xl font-bold">{p.name}</h3>
 
@@ -95,12 +94,12 @@ export default function PackageGrid({ showHeader = false }) {
           </ul>
 
           <Link
-            to="/register"
-            className={`mt-8 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 ${
-              p.featured
+            to={`/register?pkg=${p.id}`}
+            state={{ pkgId: String(p.id) }}
+            className={`mt-8 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 ${p.featured
                 ? "bg-primary text-white hover:opacity-90"
                 : "bg-primary/15 text-primary hover:bg-primary hover:text-white"
-            } text-base font-bold leading-normal tracking-[0.015em] transition-all`}
+              } text-base font-bold leading-normal tracking-[0.015em] transition-all`}
           >
             <span className="truncate">{p.featured ? "Register Now" : "Book Now"}</span>
           </Link>
