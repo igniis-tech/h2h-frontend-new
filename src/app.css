@@ -20,6 +20,64 @@
     --primary-b:  55;
   }
 
+/* ---------- TiltCard effects (3D tilt + glare + aurora glow) ---------- */
+.tilt-card {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+  border-radius: 0.75rem; /* match rounded-xl */
+  z-index: 0;
+}
+.tilt-card::before {
+  content: "";
+  position: absolute;
+  inset: -6px; /* outer glow */
+  border-radius: 1rem;
+  background: conic-gradient(
+    from 0deg,
+    rgba(18,66,57,0.00),
+    rgba(18,66,57,0.25),
+    rgba(212,175,55,0.35),
+    rgba(18,66,57,0.25),
+    rgba(18,66,57,0.00)
+  );
+  filter: blur(18px);
+  opacity: 0;
+  transform: rotate(0deg);
+  transition: opacity 180ms ease;
+  animation: tilt-rotate 16s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.tilt-card.tilt-hover::before,
+.tilt-card:hover::before {
+  opacity: 0.7;
+}
+@keyframes tilt-rotate { to { transform: rotate(360deg); } }
+
+.tilt-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  background: radial-gradient(
+    180px 180px at var(--mx, 50%) var(--my, 50%),
+    rgba(255,255,255,0.35),
+    rgba(255,255,255,0.0) 60%
+  );
+  mix-blend-mode: screen;
+}
+.tilt-card.tilt-hover .tilt-glare,
+.tilt-card:hover .tilt-glare {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card::before { animation: none; }
+}
+
   html{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

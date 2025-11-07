@@ -361,8 +361,9 @@ export default function Register() {
 
       // Helpful debug if needed:
       // console.log('BOOKING PAYLOAD', bookingPayload)
-
-      const booking = await api.createBooking(bookingPayload)
+      const bookingPayloadFinal = JSON.parse(JSON.stringify(bookingPayload))
+      console.log('BOOKING PAYLOAD (final)', bookingPayloadFinal)
+      const booking = await api.createBooking(bookingPayloadFinal)
       setResp(booking)
 
       // Optional: Sightseeing opt-in (non-blocking)
@@ -379,13 +380,16 @@ export default function Register() {
       }
 
       // Create payment order; include return_to so callback comes back to profile
-      const order = await api.createOrder({
+      const orderPayload = {
         package_id: selectedPkg.id,
         booking_id: booking?.id,
         pass_platform_fee: true,
         assume_method: assumeMethod,
         return_to: `${window.location.origin}/profile`
-      })
+      }
+      const orderPayloadFinal = JSON.parse(JSON.stringify(orderPayload))
+      console.log('ORDER PAYLOAD (final)', orderPayloadFinal)
+      const order = await api.createOrder(orderPayloadFinal)
 
       if (order?.payment_link) {
         window.location.href = order.payment_link

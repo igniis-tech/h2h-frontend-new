@@ -9,6 +9,7 @@ import Artists from '../components/home/Artists'
 import Location from '../components/home/Location'
 import Pricing from '../components/home/Pricing'
 import WhatsAppFAB from '../components/common/WhatsAppFAB'
+import Reveal from '../components/common/Reveal'
 
 export default function Home(){
   const location = useLocation();
@@ -25,14 +26,14 @@ export default function Home(){
   return (
     <div className="font-body">
       <Hero />
-      <Stats />
-      <About />
-      <div className="h-12 md:h-20 lg:h-28 bg-white" aria-hidden />
-      <Highlights />
-      <Schedule />
-      <Artists />
-      <Location />
-      <Pricing />
+      <Reveal><Stats /></Reveal>
+      <Reveal><About /></Reveal>
+      <div className="h-12 md:h-20 lg:h-28 bg-white " aria-hidden />
+      <Reveal><Highlights /></Reveal>
+      <Reveal><Schedule /></Reveal>
+      <Reveal><Artists /></Reveal>
+      <Reveal><Location /></Reveal>
+      <Reveal><Pricing /></Reveal>
       <WhatsAppFAB phone="+919836007110" />
     </div>
   )

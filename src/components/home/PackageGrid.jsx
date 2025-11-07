@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { request, formatINR } from "../../api/client";
 import { Link } from "react-router-dom";
+import Reveal from "../common/Reveal";
+import TiltCard from "../common/TiltCard";
 
 export default function PackageGrid({ showHeader = false }) {
   const [packages, setPackages] = useState([]);
@@ -63,11 +65,11 @@ export default function PackageGrid({ showHeader = false }) {
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
-      {packages.map((p) => (
+      {packages.map((p, idx) => (
+        <Reveal key={p.id || p.name} delay={idx * 120} variant="fade-up">
+        <TiltCard>
         <div
-          key={p.id || p.name}
-          className={`flex flex-col rounded-xl border-2 ${p.featured ? "border-primary bg-forest/10" : "border-earthy/60 bg-forest/5"
-            } p-8`}
+          className={`rounded-xl border-2 ${p.featured ? "border-primary bg-forest/10" : "border-earthy/60 bg-forest/5"} p-8 shadow-sm transition-shadow duration-300 ease-out hover:shadow-xl hover:shadow-brandDark/10`}
         >
           <h3 className="text-primary text-xl font-bold">{p.name}</h3>
 
@@ -80,7 +82,7 @@ export default function PackageGrid({ showHeader = false }) {
             {(p._items || []).map((it, idx) => (
               <li
                 key={idx}
-                className="grid grid-cols-[24px,1fr] items-start gap-2 leading-relaxed"
+                className="grid grid-cols-[24px,1fr] items-start gap-2 leading-relaxed transition-transform duration-200 group-hover:translate-x-0.5"
               >
                 <span
                   aria-hidden="true"
@@ -99,11 +101,13 @@ export default function PackageGrid({ showHeader = false }) {
             className={`mt-8 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 ${p.featured
                 ? "bg-primary text-white hover:opacity-90"
                 : "bg-primary/15 text-primary hover:bg-primary hover:text-white"
-              } text-base font-bold leading-normal tracking-[0.015em] transition-all`}
+              } text-base font-bold leading-normal tracking-[0.015em] transition-all transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]`}
           >
             <span className="truncate">{p.featured ? "Register Now" : "Book Now"}</span>
           </Link>
         </div>
+        </TiltCard>
+        </Reveal>
       ))}
     </div>
   );

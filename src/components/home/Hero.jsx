@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import eventImg from '../../assets/Event.webp';
+import FlipWords from '../common/FlipWords';
 
 const slides = [
   {
@@ -54,7 +55,7 @@ export default function Hero() {
       {/* Slides track */}
       <div
         ref={containerRef}
-        className="absolute inset-0"
+        className="absolute inset-0 select-none cursor-grab active:cursor-grabbing"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -73,17 +74,25 @@ export default function Hero() {
               <img
                 src={s.img}
                 alt={s.title}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover motion-safe:animate-kenburns will-change-transform"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60 motion-safe:animate-fade-in" />
 
               <div className="relative z-10 text-center text-white max-w-4xl px-4">
-                <h1 className="font-display uppercase font-black tracking-[-0.01em] leading-[0.95] text-5xl md:text-7xl mb-3">
+                <h1 className="font-display uppercase font-black tracking-[-0.01em] leading-[0.95] text-5xl md:text-7xl mb-2 motion-safe:animate-fade-up" style={{ animationDelay: "120ms" }}>
                   {s.title}
                 </h1>
-                <p className="font-body text-base md:text-lg text-white/90 max-w-2xl mx-auto">
-                  {s.blurb}
-                </p>
+                <div className="font-body text-base md:text-2xl text-white max-w-2xl mx-auto motion-safe:animate-fade-up" style={{ animationDelay: "300ms" }}>
+                  <FlipWords
+                    words={[
+                      'Recreate your childhood wonder',
+                      'Unwind where nature breathes freely',
+                      'Reconnect with the soul of culture',
+                      'Discover the you that time forgot',
+                      'Sense Nirvana in every breath',
+                    ]}
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -91,13 +100,14 @@ export default function Hero() {
       </div>
 
       {/* Bottom bar: CTA */}
-      <div className="absolute inset-x-0 bottom-6 sm:bottom-8 z-20 flex flex-col items-center gap-3">
+      <div className="absolute inset-x-0 bottom-6 sm:bottom-8 z-20 flex flex-col items-center gap-3 motion-safe:animate-floaty">
         <Link
           to="/register"
-          className="inline-flex items-center justify-center rounded-xl px-6 py-3
+          className="inline-flex items-center justify-center rounded-xl px-6 py-3 motion-safe:animate-fade-up
                bg-forest text-offwhite font-semibold shadow-sm transition
                hover:opacity-90 active:translate-y-px
                focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-30"
+          style={{ animationDelay: "550ms" }}
         >
           Book Your Hill Escape
         </Link>
