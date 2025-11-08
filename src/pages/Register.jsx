@@ -693,7 +693,7 @@ export default function Register() {
               <label className="flex items-start gap-3 text-forest text-sm">
                 <input type="checkbox" checked={accept} onChange={e => setAccept(e.target.checked)}
                        className="mt-1 h-4 w-4 rounded border-slate-700 bg-white" />
-                <span>I agree to the <a className="text-bookingPrimary underline" href="#!">terms & conditions</a>.</span>
+                <span>I agree to the <Link className="text-bookingPrimary underline" to="/terms">terms & conditions</Link>.</span>
               </label>
 
               {/* breakdown */}

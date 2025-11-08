@@ -14,6 +14,8 @@ export default function Footer() {
           <p className="opacity-90">
             <Link to="/policy" className="text-primary hover:text-primary/90 underline">Privacy Policy</Link>
             <span className="mx-2">•</span>
+            <Link to="/terms" className="text-primary hover:text-primary/90 underline">Terms &amp; Conditions</Link>
+            <span className="mx-2">•</span>
             <Link to="/refund" className="text-primary hover:text-primary/90 underline">Cancellation & Refund</Link>
             <span className="mx-2">•</span>
             <Link to="/members" className="text-primary hover:text-primary/90 underline">Members</Link>
