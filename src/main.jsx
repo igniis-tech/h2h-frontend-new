@@ -15,6 +15,7 @@ import Login from "./pages/auth/Login";
 import Callback from "./pages/auth/Callback";
 import Policy from "./pages/Policy";
 import Refund from "./pages/Refund";
+import Members from "./pages/Members";
 import { AuthProvider } from "./context/AuthContext";
 
 function Layout({ children }) {
@@ -36,6 +37,7 @@ function App() {
           <Route path="/" element={<Layout><Home /></Layout>} />
           <Route path="/register" element={<Layout><Register /></Layout>} />
           <Route path="/login" element={<Layout><Login /></Layout>} />
+          <Route path="/members" element={<Layout><Members /></Layout>} />
 
           {/* Legal */}
           <Route path="/policy" element={<Layout><Policy /></Layout>} />
