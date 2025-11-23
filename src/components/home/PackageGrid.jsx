@@ -95,16 +95,28 @@ export default function PackageGrid({ showHeader = false }) {
             ))}
           </ul>
 
-          <Link
-            to={`/register?pkg=${p.id}`}
-            state={{ pkgId: String(p.id) }}
-            className={`mt-8 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 ${p.featured
-                ? "bg-primary text-white hover:opacity-90"
-                : "bg-primary/15 text-primary hover:bg-primary hover:text-white"
-              } text-base font-bold leading-normal tracking-[0.015em] transition-all transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]`}
-          >
-            <span className="truncate">{p.featured ? "Register Now" : "Book Now"}</span>
-          </Link>
+          <div className="space-y-3 mt-8">
+            <Link
+              to={`/register?pkg=${p.id}`}
+              state={{ pkgId: String(p.id) }}
+              className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 ${p.featured
+                  ? "bg-primary text-white hover:opacity-90"
+                  : "bg-primary/15 text-primary hover:bg-primary hover:text-white"
+                } text-base font-bold leading-normal tracking-[0.015em] transition-all transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]`}
+            >
+              <span className="truncate">{p.featured ? "Register Now" : "Book Now"}</span>
+            </Link>
+            
+            <Link
+              to={`/packages/${p.id}`}
+              className={`flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 border-2 ${p.featured
+                  ? "border-primary text-primary hover:bg-primary hover:text-white"
+                  : "border-earthy/60 text-earthy hover:bg-earthy/10"
+                } text-base font-bold leading-normal tracking-[0.015em] transition-all transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]`}
+            >
+              <span className="truncate">View Details</span>
+            </Link>
+          </div>
         </div>
         </TiltCard>
         </Reveal>
