@@ -1,28 +1,85 @@
 import { useEffect, useState } from 'react'
 import { api, formatINR } from '../api/client'
-import { useAuth } from "../context/AuthContext"; 
+import { useAuth } from "../context/AuthContext";
 import TicketCard from '../components/TicketCard'
 
 function BookingRow({ b, onViewTicket, onDownloadTicket }) {
-  const paid = b?.order?.paid ?? b?.paid
+  const [paying, setPaying] = useState(false)
+
+  // Handle serializer variations (list vs single)
+  const orders = b.orders || (b.order ? [b.order] : [])
+  // Attempt to find package from any associated order order
+  const pkgId = orders.find(o => o.package && o.package.id)?.package?.id
+
+  const total = b.pricing_total_inr || 0
+  const paidAmt = b.amount_paid || 0
+  const due = Math.max(0, total - paidAmt)
+
+  // "Paid" if status is completed OR amount covers total
+  const isPaid = b.payment_status === 'COMPLETED' || (total > 0 && paidAmt >= total)
+
+  const canPayDue = due > 0 && b.status !== 'CANCELLED'
+
+  async function handlePayDue() {
+    if (paying) return
+
+    // If we can't find a package ID (e.g. legacy/broken booking), we can't init payment easily
+    if (!pkgId) {
+      alert("Cannot identify package configuration for this booking. Please contact support.")
+      return
+    }
+
+    try {
+      setPaying(true)
+      const res = await api.createOrder({
+        package_id: pkgId,
+        booking_id: b.id,
+        payment_type: 'BALANCE',
+        return_to: `${window.location.origin}/dashboard`
+      })
+
+      if (res?.payment_link) {
+        window.location.href = res.payment_link
+      } else {
+        alert("Payment link generation failed. please try again.")
+      }
+    } catch (e) {
+      alert("Error initiating payment: " + (e.message || "Unknown error"))
+    } finally {
+      setPaying(false)
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-forest/20 p-5 bg-offwhite">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="text-forest font-bold">Booking #{b.id} • {b?.event?.name || 'Highway to Heal'}</div>
-          <div className="text-forest/70 text-sm">Tickets: {b?.guests ?? '—'} • Paid: {paid ? 'Yes' : 'No'}</div>
-          {b?.pricing_total_inr && <div className="text-forest/70 text-sm mt-1">Total: {formatINR(b.pricing_total_inr)}</div>}
+          <div className="text-forest/70 text-sm">Tickets: {b?.guests ?? '—'} • Paid: {isPaid ? 'Yes' : 'No'}</div>
+          <div className="text-forest/70 text-sm mt-1">
+            Total: {formatINR(total)}
+            {paidAmt > 0 && <span className="ml-2 text-emerald-700">Paid: {formatINR(paidAmt)}</span>}
+            {due > 0 ? <span className="ml-2 text-rose-600 font-bold">Due: {formatINR(due)}</span> : <span className="ml-2 text-emerald-700 font-bold">Fully Paid</span>}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={()=>onViewTicket(b)} className="rounded-xl px-4 py-2 border-2 border-forest text-forest bg-transparent hover:bg-forest/5">View Ticket</button>
-          <button onClick={()=>onDownloadTicket(b)} className="rounded-xl px-4 py-2 bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90">Download Ticket</button>
+        <div className="flex gap-2 flex-wrap">
+          {canPayDue && (
+            <button
+              onClick={handlePayDue}
+              disabled={paying}
+              className="rounded-xl px-4 py-2 bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90 font-bold disabled:opacity-50"
+            >
+              {paying ? 'Processing…' : 'Pay Balance'}
+            </button>
+          )}
+          <button onClick={() => onDownloadTicket(b)} className="rounded-xl px-4 py-2 border-2 border-forest/20 text-forest/70 hover:bg-forest/5">Download PDF</button>
         </div>
       </div>
     </div>
   )
 }
 
-export default function Dashboard(){
+export default function Dashboard() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
@@ -32,7 +89,7 @@ export default function Dashboard(){
       try {
         setLoading(true); setErr('')
         const data = await api.myBookings()
-        const arr = Array.isArray(data) ? data : (Array.isArray(data?.results)? data.results : [])
+        const arr = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : [])
         setBookings(arr)
       } catch (e) {
         setErr(e.message || 'Failed to load bookings')
@@ -42,13 +99,13 @@ export default function Dashboard(){
     })()
   }, [])
 
-  async function viewTicket(b){
+  async function viewTicket(b) {
     const orderId = b?.order?.id
     const url = orderId ? `${api.API_BASE}/tickets/order/${orderId}.pdf` : `${api.API_BASE}/tickets/booking/${b.id}.pdf`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
-  async function downloadTicket(b){
+  async function downloadTicket(b) {
     try {
       const res = b?.order?.id
         ? await api.ticketByOrderPdf(b.order.id)
@@ -98,7 +155,7 @@ export default function Dashboard(){
   )
 }
 
-function UserProfile(){
+function UserProfile() {
   const { user } = useAuth()
   if (!user) return null
   return (

@@ -74,6 +74,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [resp, setResp] = useState(null)
+  const [paymentType, setPaymentType] = useState('FULL') // FULL or ADVANCE
+  const [advanceAmount, setAdvanceAmount] = useState(1000)
 
   // Payment status banner
   const [payBanner, setPayBanner] = useState(null) // {status, bookingId, oid, reason}
@@ -99,7 +101,7 @@ export default function Register() {
         setPackages(pkgs || []);
         setEventId(d?.event?.id || d?.data?.event?.id || null);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => { alive = false; };
   }, []);
 
@@ -140,7 +142,7 @@ export default function Register() {
         url.searchParams.delete('oid')
         url.searchParams.delete('reason')
         window.history.replaceState({}, '', url.toString())
-      } catch {}
+      } catch { }
     }
   }, [])
 
@@ -185,11 +187,11 @@ export default function Register() {
     }
 
     const baseIncludes = Number(p.base_includes ?? 1)
-    const basePrice    = Number(p.price_inr)                       // per included chargeable seat
-    const extraAdult   = Number(p.extra_price_adult_inr ?? p.price_inr)
-    const halfMax      = Number(p.child_half_max_age ?? 10)
-    const freeMax      = Number(p.child_free_max_age ?? 5)
-    const halfMult     = Number(p.child_half_multiplier ?? 0.5)
+    const basePrice = Number(p.price_inr)                       // per included chargeable seat
+    const extraAdult = Number(p.extra_price_adult_inr ?? p.price_inr)
+    const halfMax = Number(p.child_half_max_age ?? 10)
+    const freeMax = Number(p.child_free_max_age ?? 5)
+    const halfMult = Number(p.child_half_multiplier ?? 0.5)
 
     // classify everyone (primary first)
     const ages = [parseAge(primaryAge), ...cleanedCompanions.map(c => parseAge(c.age))]
@@ -208,12 +210,12 @@ export default function Register() {
     // Seats included apply to chargeable only: adults → half
     let seatsLeft = Math.max(0, Math.min(baseIncludes, chargeable))
     const incAdults = Math.min(adults, seatsLeft); seatsLeft -= incAdults
-    const incHalf   = Math.min(halfKids, seatsLeft); seatsLeft -= incHalf
+    const incHalf = Math.min(halfKids, seatsLeft); seatsLeft -= incHalf
 
     // Remaining to be charged
-    const remAdults = adults   - incAdults
-    const remHalf   = halfKids - incHalf
-    const remFree   = freeKids
+    const remAdults = adults - incAdults
+    const remHalf = halfKids - incHalf
+    const remFree = freeKids
 
     const rows = []
     const coveredChargeable = incAdults + incHalf
@@ -380,12 +382,18 @@ export default function Register() {
       }
 
       // Create payment order; include return_to so callback comes back to profile
+      // Create payment order; include return_to so callback comes back to profile
+      const isAdvance = paymentType === 'ADVANCE';
+      const finalAmountInr = isAdvance ? advanceAmount : (feeCalc.gross || totalCost);
+
       const orderPayload = {
         package_id: selectedPkg.id,
         booking_id: booking?.id,
         pass_platform_fee: true,
         assume_method: assumeMethod,
-        return_to: `${window.location.origin}/profile`
+        return_to: `${window.location.origin}/profile`,
+        amount: Math.round(finalAmountInr * 100), // paise
+        payment_type: paymentType,
       }
       const orderPayloadFinal = JSON.parse(JSON.stringify(orderPayload))
       console.log('ORDER PAYLOAD (final)', orderPayloadFinal)
@@ -460,18 +468,18 @@ export default function Register() {
                 <div>
                   <label className={labelCls}>Full Name</label>
                   <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-                         className={inputCls} placeholder="Your full name" required />
+                    className={inputCls} placeholder="Your full name" required />
                 </div>
                 <div>
                   <label className={labelCls}>Phone</label>
                   <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                         className={inputCls} placeholder="+91-XXXXXXXXXX" required />
+                    className={inputCls} placeholder="+91-XXXXXXXXXX" required />
                 </div>
 
                 <div>
                   <label className={labelCls}>Email</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                         className={inputCls} placeholder="you@example.com" required />
+                    className={inputCls} placeholder="you@example.com" required />
                 </div>
 
                 <div>
@@ -499,25 +507,25 @@ export default function Register() {
                 <div>
                   <label className={labelCls}>Primary Age (optional)</label>
                   <input value={primaryAge} onChange={e => setPrimaryAge(e.target.value)}
-                         className={inputCls} placeholder="e.g., 28 yrs" />
+                    className={inputCls} placeholder="e.g., 28 yrs" />
                 </div>
 
                 <div>
                   <label className={labelCls}>Primary Blood Group</label>
                   <input value={bloodGroup} onChange={e => setBloodGroup(e.target.value)}
-                         className={inputCls} placeholder="e.g., O+, A-, B+" />
+                    className={inputCls} placeholder="e.g., O+, A-, B+" />
                 </div>
 
                 <div>
                   <label className={labelCls}>Emergency Contact Name</label>
                   <input value={emerName} onChange={e => setEmerName(e.target.value)}
-                         className={inputCls} placeholder="Guardian / Friend name" />
+                    className={inputCls} placeholder="Guardian / Friend name" />
                 </div>
 
                 <div>
                   <label className={labelCls}>Emergency Contact Phone</label>
                   <input value={emerPhone} onChange={e => setEmerPhone(e.target.value)}
-                         className={inputCls} placeholder="+91-XXXXXXXXXX" />
+                    className={inputCls} placeholder="+91-XXXXXXXXXX" />
                 </div>
 
                 <div className="sm:col-span-2">
@@ -538,7 +546,7 @@ export default function Register() {
                     <div className="mt-2 text-xs text-forest/70">
                       {(() => {
                         const base = selectedPkg.base_includes ?? 1;
-                        const ea   = selectedPkg.extra_price_adult_inr ?? selectedPkg.price_inr;
+                        const ea = selectedPkg.extra_price_adult_inr ?? selectedPkg.price_inr;
                         const halfMax = selectedPkg.child_half_max_age ?? 10;
                         const freeMax = selectedPkg.child_free_max_age ?? 5;
                         const halfMult = selectedPkg.child_half_multiplier ?? 0.5;
@@ -574,28 +582,28 @@ export default function Register() {
                   <div className="mt-4 grid gap-3">
                     {companions.map((c, i) => (
                       <div key={i} className="grid sm:grid-cols-8 gap-3 items-center">
-                        <input value={c.name} onChange={e => setCompanions(prev => prev.map((x,idx)=>idx===i?{...x,name:e.target.value}:x))}
-                               placeholder="Name" className={smallInputCls + ' sm:col-span-3'} />
-                        <input value={c.age} onChange={e => setCompanions(prev => prev.map((x,idx)=>idx===i?{...x,age:e.target.value}:x))}
-                               placeholder="Age (e.g., 4 yrs)" className={smallInputCls + ' sm:col-span-1'} />
-                        <input value={c.blood_group} onChange={e => setCompanions(prev => prev.map((x,idx)=>idx===i?{...x,blood_group:e.target.value}:x))}
-                               placeholder="Blood Group" className={smallInputCls + ' sm:col-span-1'} />
-                        <select value={c.gender ?? 'O'} onChange={e => setCompanions(prev => prev.map((x,idx)=>idx===i?{...x,gender:e.target.value}:x))}
-                                className={smallInputCls + ' sm:col-span-1 appearance-none'}>
+                        <input value={c.name} onChange={e => setCompanions(prev => prev.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
+                          placeholder="Name" className={smallInputCls + ' sm:col-span-3'} />
+                        <input value={c.age} onChange={e => setCompanions(prev => prev.map((x, idx) => idx === i ? { ...x, age: e.target.value } : x))}
+                          placeholder="Age (e.g., 4 yrs)" className={smallInputCls + ' sm:col-span-1'} />
+                        <input value={c.blood_group} onChange={e => setCompanions(prev => prev.map((x, idx) => idx === i ? { ...x, blood_group: e.target.value } : x))}
+                          placeholder="Blood Group" className={smallInputCls + ' sm:col-span-1'} />
+                        <select value={c.gender ?? 'O'} onChange={e => setCompanions(prev => prev.map((x, idx) => idx === i ? { ...x, gender: e.target.value } : x))}
+                          className={smallInputCls + ' sm:col-span-1 appearance-none'}>
                           <option value="M">Male</option>
                           <option value="F">Female</option>
                           <option value="O">Other</option>
                         </select>
                         <select
                           value={c.meal_preference || ''}
-                          onChange={e => setCompanions(prev => prev.map((x,idx)=>idx===i?{...x,meal_preference:e.target.value}:x))}
+                          onChange={e => setCompanions(prev => prev.map((x, idx) => idx === i ? { ...x, meal_preference: e.target.value } : x))}
                           className={smallInputCls + ' sm:col-span-1 appearance-none'}
                         >
                           <option value="">Meal…</option>
                           {MEAL_OPTS.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
                         </select>
-                        <button type="button" onClick={() => setCompanions(prev => prev.filter((_,idx)=>idx!==i))}
-                                className="sm:col-span-1 rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-500">
+                        <button type="button" onClick={() => setCompanions(prev => prev.filter((_, idx) => idx !== i))}
+                          className="sm:col-span-1 rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-500">
                           Remove
                         </button>
                       </div>
@@ -692,7 +700,7 @@ export default function Register() {
 
               <label className="flex items-start gap-3 text-forest text-sm">
                 <input type="checkbox" checked={accept} onChange={e => setAccept(e.target.checked)}
-                       className="mt-1 h-4 w-4 rounded border-slate-700 bg-white" />
+                  className="mt-1 h-4 w-4 rounded border-slate-700 bg-white" />
                 <span>I agree to the <Link className="text-bookingPrimary underline" to="/terms">terms & conditions</Link>.</span>
               </label>
 
@@ -711,6 +719,66 @@ export default function Register() {
                 </div>
               ) : null}
 
+              {/* Payment Selection */}
+              {(feeCalc.gross || totalCost) > 1000 && (
+                <div className="rounded-2xl border border-bookingPrimary/30 bg-bookingPrimary/5 p-5">
+                  <div className="text-forest font-bold mb-3">Payment Option</div>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-forest/10 bg-white hover:bg-forest/5 transition-colors">
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="FULL"
+                        checked={paymentType === 'FULL'}
+                        onChange={() => setPaymentType('FULL')}
+                        className="accent-bookingPrimary w-5 h-5"
+                      />
+                      <div>
+                        <div className="font-medium text-forest">Pay Full Amount</div>
+                        <div className="text-sm text-forest/70">₹{(feeCalc.gross || totalCost).toLocaleString('en-IN')} now</div>
+                      </div>
+                    </label>
+
+                    <label className={`flex items-start gap-3 cursor-pointer p-3 rounded-xl border transition-colors ${paymentType === 'ADVANCE' ? 'border-bookingPrimary bg-white' : 'border-forest/10 bg-white hover:bg-forest/5'}`}>
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="ADVANCE"
+                        checked={paymentType === 'ADVANCE'}
+                        onChange={() => setPaymentType('ADVANCE')}
+                        className="accent-bookingPrimary w-5 h-5 mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-forest">Pay Advance Only</div>
+                        <div className="text-sm text-forest/70 mb-2">Book your spot now, pay the rest later.</div>
+
+                        {paymentType === 'ADVANCE' && (
+                          <div className="mt-2 text-sm">
+                            <label className="block text-forest/80 mb-1">Enter Amount (Min ₹1,000)</label>
+                            <div className="relative max-w-[200px]">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-forest/60">₹</span>
+                              <input
+                                type="number"
+                                min="1000"
+                                max={Math.floor(feeCalc.gross || totalCost)}
+                                value={advanceAmount}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value) || 0
+                                  setAdvanceAmount(val)
+                                }}
+                                className="w-full pl-8 pr-3 py-2 rounded-lg border border-forest/20 focus:border-bookingPrimary focus:ring-1 focus:ring-bookingPrimary outline-none text-forest"
+                              />
+                            </div>
+                            {(advanceAmount < 1000) && <div className="text-rose-600 text-xs mt-1">Minimum advance is ₹1,000</div>}
+                            {(advanceAmount >= (feeCalc.gross || totalCost)) && <div className="text-amber-600 text-xs mt-1">For full payment, select the option above.</div>}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {err && <div className="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3">{err}</div>}
               {resp && <div className="rounded-xl border border-bookingPrimary bg-bookingPrimary/10 text-forest px-4 py-3">
                 Booking created! {resp?.id ? <><span className="ml-1">ID: <b>{resp.id}</b></span></> : null}
@@ -718,7 +786,7 @@ export default function Register() {
 
               <div className="flex items-center gap-4">
                 <button type="submit" disabled={submitDisabled}
-                        className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold shadow-lg ${submitDisabled ? 'bg-slate-700 text-slate-300 cursor-not-allowed' : 'bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90 shadow-emerald-800/30'}`}>
+                  className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold shadow-lg ${submitDisabled ? 'bg-slate-700 text-slate-300 cursor-not-allowed' : 'bg-bookingPrimary text-slate-950 hover:bg-bookingPrimary/90 shadow-emerald-800/30'}`}>
                   {loading ? 'Processing...' : 'Confirm & Pay'}
                 </button>
                 <Link to="/" className="text-forest hover:opacity-80 underline">Back to Home</Link>

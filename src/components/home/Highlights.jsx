@@ -31,7 +31,7 @@ export default function Highlights(){
                 <img
                   src={f.img}
                   alt={f.title}
-                  className="w-full sm:w-40 h-36 object-cover flex-shrink-0"
+                  className="w-full sm:w-40 aspect-square sm:aspect-[4/3] lg:aspect-square object-cover flex-shrink-0"
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg text-forest">{f.title}</h3>

@@ -38,7 +38,7 @@ function normalizeApiBase(raw) {
 
 const fromEnvJs = (typeof window !== "undefined" && window._env_?.BACKEND_URL) || "";
 // @ts-ignore
-const fromVite  = (typeof import.meta !== "undefined" && import.meta?.env?.VITE_API_BASE) || "";
+const fromVite = (typeof import.meta !== "undefined" && import.meta?.env?.VITE_API_BASE) || "";
 export const API_BASE = normalizeApiBase(fromEnvJs || fromVite || "/api");
 
 // -------------------------------------------------
@@ -55,26 +55,26 @@ export function withTimeout(promise, ms = 12000) {
 // -------------------------------------------------
 // Tokens (stateless; memory + storage)
 // -------------------------------------------------
-let accessToken  = null; // Cognito access token
-let idToken      = null; // Cognito ID token
+let accessToken = null; // Cognito access token
+let idToken = null; // Cognito ID token
 let refreshToken = null; // Cognito refresh token
 
 (function bootstrapTokens() {
   try {
-    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || null;
-    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || null;
+    accessToken = sessionStorage.getItem("jwt") || localStorage.getItem("jwt") || null;
+    idToken = sessionStorage.getItem("id_jwt") || localStorage.getItem("id_jwt") || null;
     refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || null;
-  } catch {}
+  } catch { }
 })();
 
 function emitAuthUpdated() {
-  try { window.dispatchEvent(new Event("auth:updated")); } catch {}
+  try { window.dispatchEvent(new Event("auth:updated")); } catch { }
 }
 
 function persistTokens({ access, id, refresh } = {}) {
-  if (access !== undefined) accessToken  = access;
-  if (id     !== undefined) idToken      = id;
-  if (refresh!== undefined) refreshToken = refresh;
+  if (access !== undefined) accessToken = access;
+  if (id !== undefined) idToken = id;
+  if (refresh !== undefined) refreshToken = refresh;
 
   const write = (k, v) => {
     try {
@@ -84,7 +84,7 @@ function persistTokens({ access, id, refresh } = {}) {
       } else {
         sessionStorage.setItem(k, v); localStorage.setItem(k, v);
       }
-    } catch {}
+    } catch { }
   };
   write("jwt", accessToken);
   write("id_jwt", idToken);
@@ -95,7 +95,7 @@ function persistTokens({ access, id, refresh } = {}) {
 
 export function setAuthTokens({ access, id, refresh } = {}) { persistTokens({ access, id, refresh }); }
 export function getAccessToken() { return accessToken; }
-export function getIdToken()     { return idToken; }
+export function getIdToken() { return idToken; }
 
 // Prefer ID token for all endpoints unless you specifically need access_token scopes
 function chooseTokenFor(/* url */) {
@@ -111,16 +111,16 @@ export function readStoredProfile() {
     if (s) return JSON.parse(s);
     const l = localStorage.getItem("user_info");
     if (l) return JSON.parse(l);
-  } catch {}
+  } catch { }
   return null;
 }
 
 function syncTokensFromStorage() {
   try {
-    accessToken  = sessionStorage.getItem("jwt")     || localStorage.getItem("jwt")     || accessToken || null;
-    idToken      = sessionStorage.getItem("id_jwt")  || localStorage.getItem("id_jwt")  || idToken || null;
+    accessToken = sessionStorage.getItem("jwt") || localStorage.getItem("jwt") || accessToken || null;
+    idToken = sessionStorage.getItem("id_jwt") || localStorage.getItem("id_jwt") || idToken || null;
     refreshToken = sessionStorage.getItem("refresh_token") || localStorage.getItem("refresh_token") || refreshToken || null;
-  } catch {}
+  } catch { }
 }
 
 // (optional) refresh flow (only if backend supports it)
@@ -145,8 +145,8 @@ async function refreshAccessToken() {
       } catch (e) { lastErr = e; }
     }
     if (!data) throw lastErr || new Error("refresh failed");
-    const newAccess  = data.access || data.access_token || null;
-    const newId      = data.id || data.id_token || getIdToken() || null;
+    const newAccess = data.access || data.access_token || null;
+    const newId = data.id || data.id_token || getIdToken() || null;
     const newRefresh = data.refresh || data.refresh_token || refreshToken || null;
     if (!newAccess) throw new Error("no access token returned");
     persistTokens({ access: newAccess, id: newId, refresh: newRefresh });
@@ -191,7 +191,7 @@ export async function request(path, { method = "GET", body = null, headers = {},
     try {
       await refreshAccessToken();
       res = await doFetch();
-    } catch {}
+    } catch { }
   }
 
   const ct = res.headers.get("content-type") || "";
@@ -267,14 +267,14 @@ export const api = {
   me: async () => readStoredProfile(),
 
   logout: async () => {
-    try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch {}
+    try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch { }
     setAuthTokens({ access: null, id: null, refresh: null });
     try {
       sessionStorage.removeItem("user_info"); localStorage.removeItem("user_info");
       sessionStorage.removeItem("jwt"); localStorage.removeItem("jwt");
       sessionStorage.removeItem("id_jwt"); localStorage.removeItem("id_jwt");
       sessionStorage.removeItem("refresh_token"); localStorage.removeItem("refresh_token");
-    } catch {}
+    } catch { }
     emitAuthUpdated();
     return { ok: true };
   },
@@ -295,8 +295,8 @@ export const api = {
   },
   createBooking: (payload) => request("/bookings/create", { method: "POST", body: payload }),
   myBookings: () => request("/bookings/me"),
-  createOrder: ({ package_id, booking_id, pass_platform_fee = true, assume_method, return_to } = {}) =>
-    request("/payments/create-order", { method: "POST", body: { package_id, booking_id, pass_platform_fee, assume_method, return_to } }),
+  createOrder: ({ package_id, booking_id, promo_code, amount, payment_type, pass_platform_fee = true, assume_method, return_to } = {}) =>
+    request("/payments/create-order", { method: "POST", body: { package_id, booking_id, promo_code, amount, payment_type, pass_platform_fee, assume_method, return_to } }),
   validatePromocode: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/promocodes/validate${q ? `?${q}` : ""}`);
@@ -304,9 +304,9 @@ export const api = {
   getOrderStatus: (oid) => request(`/orders/status?oid=${encodeURIComponent(oid)}`),
 
   // PDF APIs (Response-compatible) + direct download helpers
-  ticketByOrderPdf:   (orderId)   => fetchPdfResponse(`/tickets/order/${orderId}.pdf`),
+  ticketByOrderPdf: (orderId) => fetchPdfResponse(`/tickets/order/${orderId}.pdf`),
   ticketByBookingPdf: (bookingId) => fetchPdfResponse(`/tickets/booking/${bookingId}.pdf`),
-  downloadTicketByOrder:   (orderId)   => downloadPdf(`/tickets/order/${orderId}.pdf`,   `ticket-${orderId}.pdf`),
+  downloadTicketByOrder: (orderId) => downloadPdf(`/tickets/order/${orderId}.pdf`, `ticket-${orderId}.pdf`),
   downloadTicketByBooking: (bookingId) => downloadPdf(`/tickets/booking/${bookingId}.pdf`, `booking-${bookingId}.pdf`),
 
   post: (path, payload) => request(path, { method: "POST", body: payload }),
@@ -322,7 +322,7 @@ export function startSSO() {
   try {
     sessionStorage.setItem("sso_state", state);
     sessionStorage.setItem("sso_return_to", window.location.pathname || "/");
-  } catch {}
+  } catch { }
   const redirectUri = frontendCallbackUri();
   const url = `${API_BASE}/auth/sso/login?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
   window.location.assign(url);
@@ -353,8 +353,8 @@ export async function exchangeCodeForToken({ code, state }) {
     throw new Error(msg);
   }
 
-  const access  = body?.tokens?.access_token  || body?.access_token  || null;
-  const id      = body?.tokens?.id_token      || body?.id_token      || null;
+  const access = body?.tokens?.access_token || body?.access_token || null;
+  const id = body?.tokens?.id_token || body?.id_token || null;
   const refresh = body?.tokens?.refresh_token || body?.refresh_token || null;
   const profile = body?.claims || body?.user || body?.user_info || null;
 
@@ -362,7 +362,7 @@ export async function exchangeCodeForToken({ code, state }) {
 
   if (profile) {
     const s = JSON.stringify(profile);
-    try { sessionStorage.setItem("user_info", s); localStorage.setItem("user_info", s); } catch {}
+    try { sessionStorage.setItem("user_info", s); localStorage.setItem("user_info", s); } catch { }
   }
   emitAuthUpdated();
   return { access, id, refresh, profile };
