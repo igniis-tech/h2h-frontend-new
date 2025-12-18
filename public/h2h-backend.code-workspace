@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../Dev/Advanced_payment/h2h-backend"
+		},
+		{
+			"path": "../../../Dev/Advanced_payment/h2h-admin-app"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
