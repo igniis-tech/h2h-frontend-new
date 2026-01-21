@@ -18,6 +18,7 @@ import Refund from "./pages/Refund";
 import Members from "./pages/Members";
 import Terms from "./pages/Terms";
 import PackageDetails from "./pages/PackageDetails";
+import PhotoUpload from "./pages/PhotoUpload";
 import { AuthProvider } from "./context/AuthContext";
 
 function Layout({ children }) {
@@ -41,6 +42,7 @@ function App() {
           <Route path="/login" element={<Layout><Login /></Layout>} />
           <Route path="/members" element={<Layout><Members /></Layout>} />
           <Route path="/packages/:id" element={<Layout><PackageDetails /></Layout>} />
+          <Route path="/upload-photos" element={<Layout><PhotoUpload /></Layout>} />
 
           {/* Legal */}
           <Route path="/terms" element={<Layout><Terms /></Layout>} />
